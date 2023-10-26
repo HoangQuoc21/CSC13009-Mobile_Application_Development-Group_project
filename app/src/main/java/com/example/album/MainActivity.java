@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(layoutManager);
 
         // set custom image adapter for recycler view
-        adapter = new ImageAdapter(imageList,this);
+        adapter = new ImageAdapter(imageList,MainActivity.this);
         recyclerView.setAdapter(adapter);
 
         // processing permission using Dexter

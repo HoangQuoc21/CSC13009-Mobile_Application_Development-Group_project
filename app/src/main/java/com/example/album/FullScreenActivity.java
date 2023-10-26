@@ -24,7 +24,8 @@ public class FullScreenActivity extends AppCompatActivity {
         fullImage = findViewById(R.id.fullImage);
 
         Intent intent = getIntent();
-        image = intent.getStringExtra("parseData");
+        Bundle bundle = intent.getBundleExtra("package");
+        image = bundle.getString("parseData");
         Glide.with(this).load(image).into(fullImage);
 
         scaleGestureDetector = new ScaleGestureDetector(this,
