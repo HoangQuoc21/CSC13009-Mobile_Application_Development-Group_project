@@ -37,14 +37,22 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.viewHolder> 
             @Override
             public void onClick(View view) {
                 // prepare image as a link and put it to intent
-                String parseData = list.get(position).getPath().toString();
+//                String parseData = list.get(position).getPath().toString();
+//                Bundle mybundle = new Bundle();
+//                mybundle.putString("parseData", parseData);
+//
+//                Intent newIntent = new Intent(context, FullScreenActivity.class);
+//                newIntent.putExtra("package", mybundle);
+
+
+                // send data to Image activity
+                String imageLink = list.get(position).getPath().toString();
                 Bundle mybundle = new Bundle();
-                mybundle.putString("parseData", parseData);
+                mybundle.putString("linkImage", imageLink);
 
-                Intent newIntent = new Intent(context, FullScreenActivity.class);
-                newIntent.putExtra("package", mybundle);
-
-                context.startActivity(newIntent);
+                Intent newIntent = new Intent(context, Image.class);
+                newIntent.putExtra("mypackage", mybundle);
+                context.startActivity(newIntent, mybundle);
             }
         });
 

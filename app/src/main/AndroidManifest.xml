@@ -18,6 +18,9 @@
             android:name=".FullScreenActivity"
             android:exported="false" />
         <activity
+            android:name=".Image"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
