@@ -1,8 +1,10 @@
 package com.example.album;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -11,7 +13,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class Image extends AppCompatActivity {
     private static final int REQUEST_WRITE_STORAGE = 112;
@@ -33,6 +39,7 @@ public class Image extends AppCompatActivity {
     private float lastX = 0.0f;
     private float lastY = 0.0f;
 
+    Uri imageUri;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,9 +52,10 @@ public class Image extends AppCompatActivity {
         Bundle myBundle = myIntent.getBundleExtra("mypackage");
         String imagePath = myBundle.getString("linkImage");
 
+        
         try {
             // parse String path to Uri to create bitmap
-            Uri imageUri = Uri.parse(imagePath);
+            imageUri = Uri.parse(imagePath);
             Bitmap bm = BitmapFactory.decodeStream(
                     getContentResolver().openInputStream(imageUri));
             if (bm != null) {
@@ -117,7 +125,58 @@ public class Image extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // Your code here.
+                //tạo input stream để đọc vào Uri của ảnh
+                InputStream in = null;
+                try {
+                    //đọc uri ảnh
+                    in = getContentResolver().openInputStream(imageUri);
 
+                    //tạo biến exifinterface để đọc các thông tin exif
+                    ExifInterface exif = new ExifInterface(in);
+                    // Now you can extract any Exif tag you want
+                    // Assuming the image is a JPEG or supported raw format
+
+                    //lấy dữ liệu exif
+                    // Get some exif attributes, you can get more from the documentation
+                    String dateTime = exif.getAttribute(ExifInterface.TAG_DATETIME);
+                    String imageLength = exif.getAttribute(ExifInterface.TAG_IMAGE_LENGTH);
+                    String imageWidth = exif.getAttribute(ExifInterface.TAG_IMAGE_WIDTH);
+                    String orientation = exif.getAttribute(ExifInterface.TAG_ORIENTATION);
+                    String make = exif.getAttribute(ExifInterface.TAG_MAKE);
+                    String model = exif.getAttribute(ExifInterface.TAG_MODEL);
+
+
+                    //tạo string chứa các thông tin exif
+                    // Create a StringBuilder to format the exif information
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("Date and time: ").append(dateTime).append("\n");
+                    sb.append("Image length: ").append(imageLength).append(" pixels\n");
+                    sb.append("Image width: ").append(imageWidth).append(" pixels\n");
+                    sb.append("Orientation: ").append(orientation).append("\n");
+                    sb.append("Camera make: ").append(make).append("\n");
+                    sb.append("Camera model: ").append(model).append("\n");
+
+                    //tạo hộp thoại dialog để hiển thị thông tin exif
+                    // Create an AlertDialog.Builder object to build the dialog
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Image.this);
+                    builder.setTitle("Exif information");
+                    builder.setMessage(sb.toString());
+                    builder.setPositiveButton("OK", null);
+
+                    //hiển thị hộp thoại dialog
+                    // Create and show the dialog
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+
+                } catch (IOException e) {
+                    // Handle any errors
+                } finally {
+                    if (in != null) {
+                        try {
+                            in.close();
+                        } catch (IOException ignored) {}
+                    }
+                }
             }
         });
     }
