@@ -18,7 +18,7 @@
             android:name=".FullScreenActivity"
             android:exported="false" />
         <activity
-            android:name=".Image"
+            android:name=".ImageActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

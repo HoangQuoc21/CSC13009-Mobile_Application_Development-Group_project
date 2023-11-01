@@ -50,7 +50,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.viewHolder> 
                 Bundle mybundle = new Bundle();
                 mybundle.putString("linkImage", imageLink);
 
-                Intent newIntent = new Intent(context, Image.class);
+                Intent newIntent = new Intent(context, ImageActivity.class);
                 newIntent.putExtra("mypackage", mybundle);
                 context.startActivity(newIntent, mybundle);
             }

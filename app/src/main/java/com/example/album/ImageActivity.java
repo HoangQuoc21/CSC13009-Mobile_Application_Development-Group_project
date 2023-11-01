@@ -14,12 +14,11 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class Image extends AppCompatActivity {
+public class ImageActivity extends AppCompatActivity {
     private static final int REQUEST_WRITE_STORAGE = 112;
 
     //Khai báo các nút Button
@@ -67,7 +66,9 @@ public class Image extends AppCompatActivity {
 
                 //Xử lý scale ảnh (Zoom in, Zoom out);
                 scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
-                Toast.makeText(this, " Đọc được mà :<", Toast.LENGTH_SHORT).show();
+
+                //thông báo để kiểm tra
+                Toast.makeText(this, " Đọc được ảnh từ đường dẫn", Toast.LENGTH_SHORT).show();
             }
             else {
                 Toast.makeText(this, "Không thể đọc ảnh từ đường dẫn.", Toast.LENGTH_SHORT).show();
@@ -158,7 +159,7 @@ public class Image extends AppCompatActivity {
 
                     //tạo hộp thoại dialog để hiển thị thông tin exif
                     // Create an AlertDialog.Builder object to build the dialog
-                    AlertDialog.Builder builder = new AlertDialog.Builder(Image.this);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(ImageActivity.this);
                     builder.setTitle("Exif information");
                     builder.setMessage(sb.toString());
                     builder.setPositiveButton("OK", null);
