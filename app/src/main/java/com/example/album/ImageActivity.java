@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,10 +69,11 @@ public class ImageActivity extends AppCompatActivity {
                 scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
 
                 //thông báo để kiểm tra
-                Toast.makeText(this, " Đọc được ảnh từ đường dẫn", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, " Đọc được ảnh từ đường dẫn", Toast.LENGTH_SHORT).show();
             }
             else {
-                Toast.makeText(this, "Không thể đọc ảnh từ đường dẫn.", Toast.LENGTH_SHORT).show();
+                //thông báo để kiểm tra
+                //Toast.makeText(this, "Không thể đọc ảnh từ đường dẫn.", Toast.LENGTH_SHORT).show();
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -126,9 +128,16 @@ public class ImageActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // Your code here.
+                //Tạo biến File giúp đọc file
+                File file = new File(imagePath);
+
                 //tạo input stream để đọc vào Uri của ảnh
                 InputStream in = null;
                 try {
+                    //Đọc thông tin ảnh
+                    String name = file.getName();
+                    String place = file.getPath();
+
                     //đọc uri ảnh
                     in = getContentResolver().openInputStream(imageUri);
 
@@ -142,7 +151,6 @@ public class ImageActivity extends AppCompatActivity {
                     String dateTime = exif.getAttribute(ExifInterface.TAG_DATETIME);
                     String imageLength = exif.getAttribute(ExifInterface.TAG_IMAGE_LENGTH);
                     String imageWidth = exif.getAttribute(ExifInterface.TAG_IMAGE_WIDTH);
-                    String orientation = exif.getAttribute(ExifInterface.TAG_ORIENTATION);
                     String make = exif.getAttribute(ExifInterface.TAG_MAKE);
                     String model = exif.getAttribute(ExifInterface.TAG_MODEL);
 
@@ -150,17 +158,18 @@ public class ImageActivity extends AppCompatActivity {
                     //tạo string chứa các thông tin exif
                     // Create a StringBuilder to format the exif information
                     StringBuilder sb = new StringBuilder();
+                    sb.append("Name: ").append(name).append("\n");
+                    sb.append("Saved place: ").append(place).append("\n");
                     sb.append("Date and time: ").append(dateTime).append("\n");
                     sb.append("Image length: ").append(imageLength).append(" pixels\n");
                     sb.append("Image width: ").append(imageWidth).append(" pixels\n");
-                    sb.append("Orientation: ").append(orientation).append("\n");
                     sb.append("Camera make: ").append(make).append("\n");
                     sb.append("Camera model: ").append(model).append("\n");
 
                     //tạo hộp thoại dialog để hiển thị thông tin exif
                     // Create an AlertDialog.Builder object to build the dialog
                     AlertDialog.Builder builder = new AlertDialog.Builder(ImageActivity.this);
-                    builder.setTitle("Exif information");
+                    builder.setTitle("Image Information");
                     builder.setMessage(sb.toString());
                     builder.setPositiveButton("OK", null);
 
