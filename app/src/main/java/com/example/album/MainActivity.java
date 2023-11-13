@@ -5,6 +5,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
@@ -12,6 +13,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.karumi.dexter.Dexter;
@@ -28,7 +31,9 @@ public class MainActivity extends AppCompatActivity {
     RecyclerView recyclerView;
     ArrayList<imageModel> imageList;
     ImageAdapter adapter;
+    Button btnAll, btnAlbum, btnTrash;
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,6 +51,11 @@ public class MainActivity extends AppCompatActivity {
         // set custom image adapter for recycler view
         adapter = new ImageAdapter(imageList,MainActivity.this);
         recyclerView.setAdapter(adapter);
+
+        // connect buttons
+        btnAll = (Button)findViewById(R.id.btnAllTab);
+        btnAlbum = (Button)findViewById(R.id.btnAlbumTab);
+        btnTrash = (Button)findViewById(R.id.btnTrashTab);
 
         // processing permission using Dexter
         Dexter.withContext(this)
@@ -66,7 +76,24 @@ public class MainActivity extends AppCompatActivity {
                         permissionToken.continuePermissionRequest();
                     }
                 }).check();
-
+        btnAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this, "Open another activity", Toast.LENGTH_SHORT).show();
+            }
+        });
+        btnAlbum.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this, "Open album activity", Toast.LENGTH_SHORT).show();
+            }
+        });
+        btnTrash.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this, "Open trash activity", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     // load images in storage
