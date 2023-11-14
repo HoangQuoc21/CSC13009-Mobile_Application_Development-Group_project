@@ -108,7 +108,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String projection[] = new String[]{
-                MediaStore.Images.Media._ID
+                MediaStore.Images.Media._ID,
+                MediaStore.Images.Media.DATE_TAKEN
         };
 
         try(Cursor cursor = MainActivity.this.getContentResolver().query(
@@ -117,10 +118,25 @@ public class MainActivity extends AppCompatActivity {
                 null,
                 null
         )){
+            Collections.sort(cursor, new Comparator<Cursor>() {
+                @Override
+                public int compare(Cursor cursor1, Cursor cursor2) {
+                    long date1 = cursor1.getLong(cursor1.getColumnIndex(MediaStore.Images.Media.DATE_TAKEN));
+                    long date2 = cursor2.getLong(cursor2.getColumnIndex(MediaStore.Images.Media.DATE_TAKEN));
+                    return Long.compare(date2, date1);
+                }
+            });
+            HashMap<String, ArrayList<String>> imagesByDate = new HashMap<>();
             int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
+            int dateTaken = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN));
             while (cursor.moveToNext()){
                 long id = cursor.getLong(idColumn);
+                String dateTaken = cursor.getString(dateTaken);
                 Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,id);
+                if (!imagesByDate.containsKey(dateTaken)) {
+                    imagesByDate.put(dateTaken, new ArrayList<String>());
+                }
+                imagesByDate.get(dateTaken).add(contentUri);
                 imageList.add(new imageModel(contentUri));
             }
             adapter.notifyDataSetChanged();
