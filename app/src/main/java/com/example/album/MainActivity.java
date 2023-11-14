@@ -33,6 +33,10 @@ public class MainActivity extends AppCompatActivity {
     ImageAdapter adapter;
     Button btnAll, btnAlbum, btnTrash;
 
+    ArrayList<String> dates;
+    HashMap<String, ArrayList<imageModel>> imagesByDate;
+    DateAdapter dateAdapter;
+
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,16 +45,20 @@ public class MainActivity extends AppCompatActivity {
 
         // connect recycler view and create a storage for images' model
         recyclerView = findViewById(R.id.recyclerView);
-        imageList = new ArrayList<>();
+        //imageList = new ArrayList<>();
+        dates = new ArrayList<>();
 
         // set grid view layout for recycler view with number of column = 3
-        GridLayoutManager layoutManager = new
-                GridLayoutManager(this,3);
+        //GridLayoutManager layoutManager = new GridLayoutManager(this,3);
+        //recyclerView.setLayoutManager(layoutManager);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(holder.itemView.getContext(), LinearLayoutManager.HORIZONTAL, false);
         recyclerView.setLayoutManager(layoutManager);
 
         // set custom image adapter for recycler view
-        adapter = new ImageAdapter(imageList,MainActivity.this);
-        recyclerView.setAdapter(adapter);
+        //adapter = new ImageAdapter(imageList,MainActivity.this);
+        dateAdapter = new DateAdapter(imagesByDate, dates, this);
+        recyclerView.setAdapter(dateAdapter);
+        
 
         // connect buttons
         btnAll = (Button)findViewById(R.id.btnAllTab);
@@ -126,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
                     return Long.compare(date2, date1);
                 }
             });
-            HashMap<String, ArrayList<String>> imagesByDate = new HashMap<>();
+            imagesByDate = new HashMap<>();
             int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
             int dateTaken = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN));
             while (cursor.moveToNext()){
@@ -134,10 +142,11 @@ public class MainActivity extends AppCompatActivity {
                 String dateTaken = cursor.getString(dateTaken);
                 Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,id);
                 if (!imagesByDate.containsKey(dateTaken)) {
-                    imagesByDate.put(dateTaken, new ArrayList<String>());
+                    dates.add(dateTaken);
+                    imagesByDate.put(dateTaken, new ArrayList<imageModel>());
                 }
                 imagesByDate.get(dateTaken).add(contentUri);
-                imageList.add(new imageModel(contentUri));
+                //imageList.add(new imageModel(contentUri));
             }
             adapter.notifyDataSetChanged();
             cursor.close();
