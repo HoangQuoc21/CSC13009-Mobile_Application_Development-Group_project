@@ -1,6 +1,25 @@
+package com.example.album;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.album.ImageAdapter;
+import com.example.album.R;
+import com.example.album.imageModel;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
 public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> {
+    private Context context;
     private ArrayList<String> dates;
-    private HashMap<String, ArrayList<String>> imagesByDate;
+    private HashMap<String, ArrayList<imageModel>> imagesByDate;
 
     public DateAdapter(ArrayList<String> dates, HashMap<String, ArrayList<imageModel>> imagesByDate, Context context) {
         this.dates = dates;

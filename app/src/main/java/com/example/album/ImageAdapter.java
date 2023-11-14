@@ -32,26 +32,17 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.viewHolder> 
     public void onBindViewHolder(ImageAdapter.viewHolder holder, int position) {
         Glide.with(context).load(list.get(position).getPath()).into(holder.imageView);
 
-        // when click on an image, open new full-iamge intent
+        // Khi click vào ảnh thì sẽ kích hoạt Activity xem ảnh đơn
         holder.imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // prepare image as a link and put it to intent
-//                String parseData = list.get(position).getPath().toString();
-//                Bundle mybundle = new Bundle();
-//                mybundle.putString("parseData", parseData);
-//
-//                Intent newIntent = new Intent(context, FullScreenActivity.class);
-//                newIntent.putExtra("package", mybundle);
-
-
-                // send data to Image activity
+                // Gửi dữ liệu ảnh (URI path) cho Activity xem ảnh đơn thể render ảnh
                 String imageLink = list.get(position).getPath().toString();
                 Bundle mybundle = new Bundle();
-                mybundle.putString("linkImage", imageLink);
+                mybundle.putString("imageLink", imageLink);
 
-                Intent newIntent = new Intent(context, ImageActivity.class);
-                newIntent.putExtra("mypackage", mybundle);
+                Intent newIntent = new Intent(context, FullScreenActivity.class);
+                newIntent.putExtra("package", mybundle);
                 context.startActivity(newIntent, mybundle);
             }
         });
