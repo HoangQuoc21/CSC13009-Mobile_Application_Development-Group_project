@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
                 String dateTaken_unix = cursor.getString(dateTakenColumn);
                 long dv = Long.valueOf(dateTaken_unix);
                 Date df = new java.util.Date(dv);
-                String dateTaken = new SimpleDateFormat("dd-MM yyyy").format(df);
+                String dateTaken = new SimpleDateFormat("dd-MM-yyyy").format(df);
 
                 Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,id);
                 if (!imagesByDate.containsKey(dateTaken)) {
