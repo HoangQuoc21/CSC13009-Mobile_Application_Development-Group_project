@@ -1,9 +1,9 @@
 package com.example.album;
-
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,40 +12,74 @@ import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-
-import com.bumptech.glide.Glide;
+import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class FullScreenActivity extends AppCompatActivity {
+public class ImageActivity extends AppCompatActivity {
+    private static final int REQUEST_WRITE_STORAGE = 112;
 
-    ImageView fullImage;
-    String imageLink = ""; // as a link
-    String imageDate = "";
-    String imageIndex = "";
-    Uri imageUri;
-    ScaleGestureDetector scaleGestureDetector;
-    float scaleFactor = 1.0f;
+    //Khai báo các nút Button
     Button btnAddAlbum, btnAddFavorite, btnDelete, btnInfo, btnBack;
+
+    //Khai báo ImageView
+
+    ImageView imageView;
+
+    //Khai báo ScaleGestureDetector dùng để scale ảnh (Zoom in, Zoom out)
+    private ScaleGestureDetector scaleGestureDetector;
+
+    // Khai báo giá trị Factor (giá trị scale)
+    private float Factor = 1.0f;
+
+    //Khai báo tọa độ lastX, last Y dùng để di chuyển ảnh
+    private float lastX = 0.0f;
+    private float lastY = 0.0f;
+
+    Uri imageUri;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image);
 
-        fullImage = findViewById(R.id.imageView);
+        //Lấy dữ liệu từ Main Activity
+        Intent myIntent = getIntent();
 
-        Intent intent = getIntent();
-        Bundle bundle = intent.getBundleExtra("package");
-        imageLink = bundle.getString("imageLink");
-        imageDate = bundle.getString("imageDate");
-        imageIndex = bundle.getString("imageIndex");
+        //Lấy bundle ra hỏi intent
+        Bundle myBundle = myIntent.getBundleExtra("mypackage");
+        String imagePath = myBundle.getString("imageLink");
+        String imageDate = myBundle.getString("imageDate");
+        String imageIndex = myBundle.getString("imageIndex");
 
-        Glide.with(this).load(imageLink).into(fullImage);
+        try {
+            // parse String path to Uri to create bitmap
+            imageUri = Uri.parse(imagePath);
+            Bitmap bm = BitmapFactory.decodeStream(
+                    getContentResolver().openInputStream(imageUri));
+            if (bm != null) {
+                //Kết nối với layout
+                imageView = findViewById(R.id.imageView);
 
-        scaleGestureDetector = new ScaleGestureDetector(this,
-                new ScaleListener());
+                // Đặt ảnh vào ImageView
+                imageView.setImageBitmap(bm);
+
+                //Xử lý scale ảnh (Zoom in, Zoom out);
+                scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
+
+                //thông báo để kiểm tra
+                //Toast.makeText(this, " Đọc được ảnh từ đường dẫn", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                //thông báo để kiểm tra
+                //Toast.makeText(this, "Không thể đọc ảnh từ đường dẫn.", Toast.LENGTH_SHORT).show();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        ;
 
         // Kết nối các nút Button với layout
         btnAddAlbum = (Button) findViewById(R.id.btnAddAlbum);
@@ -99,7 +133,7 @@ public class FullScreenActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // Your code here.
                 //Tạo biến File giúp đọc file
-                File file = new File(imageLink);
+                File file = new File(imagePath);
 
                 //tạo input stream để đọc vào Uri của ảnh
                 InputStream in = null;
@@ -109,7 +143,6 @@ public class FullScreenActivity extends AppCompatActivity {
                     String place = file.getPath();
 
                     //đọc uri ảnh
-                    imageUri = Uri.parse(imageLink);
                     in = getContentResolver().openInputStream(imageUri);
 
                     //tạo biến exifinterface để đọc các thông tin exif
@@ -139,7 +172,7 @@ public class FullScreenActivity extends AppCompatActivity {
 
                     //tạo hộp thoại dialog để hiển thị thông tin exif
                     // Create an AlertDialog.Builder object to build the dialog
-                    AlertDialog.Builder builder = new AlertDialog.Builder(FullScreenActivity.this);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(ImageActivity.this);
                     builder.setTitle("Image Information");
                     builder.setMessage(sb.toString());
                     builder.setPositiveButton("OK", null);
@@ -161,22 +194,48 @@ public class FullScreenActivity extends AppCompatActivity {
             }
         });
     }
+    //Xử lý scale ảnh (Zoom in, Zoom out);
 
+    //Xử lý event chạm vòa ảnh (Move)
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+
         scaleGestureDetector.onTouchEvent(event);
-        return true;
+
+
+        // Xử lý di chuyển ảnh
+        // Xử lý này để sau khi Zoom thì ta có thể kéo chuột để xem ảnh
+
+        // Lưu giá trị tọa độ chuột hiện tại vào lastX và lastY
+        float currentX = event.getX();
+        float currentY = event.getY();
+
+        // Xử lý sự kiện kéo chuột
+        if (event.getAction() == MotionEvent.ACTION_MOVE) {
+            float deltaX = currentX - lastX;
+            float deltaY = currentY - lastY;
+            imageView.scrollBy((int) -deltaX, (int) -deltaY);
+        }
+
+        // Cập nhật lastX và lastY cho sự kiện tiếp theo
+        lastX = currentX;
+        lastY = currentY;
+
+        return super.onTouchEvent(event);
     }
-    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener
-    {
+
+    // Xử lý Scale ảnh
+    class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
-            scaleFactor *= detector.getScaleFactor();
-            scaleFactor = Math.max(0.1f,Math.min(scaleFactor,10.0f));
-
-            fullImage.setScaleX(scaleFactor);
-            fullImage.setScaleY(scaleFactor);
-
+            // Lấy độ Zoom
+            Factor *= detector.getScaleFactor();
+            Factor = Math.max(0.1f, Math.min(Factor, 10.f));
+            // Zoom ảnh (Zoom in hoặc out)
+            // Để kiểm tra, nếu dùng điện thoại thì dùng 2 ngón tay để zoom.
+            // Nếu dùng máy ảo trong laptop thì nhấn giữ phím Ctrl rồi lăn con lăn của chuột, hoặc dùng touchpad để Zoom
+            imageView.setScaleX(Factor);
+            imageView.setScaleY(Factor);
             return true;
         }
     }
