@@ -111,7 +111,12 @@ public class ImageActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // Your code here.
+//                Toast.makeText(ImageActivity.this, "Add favorite", Toast.LENGTH_SHORT).show();
+                // gửi index của ảnh trong danh sách cho MainActivity bằng broadcast
 
+                Intent intentAddFavorite= new Intent("addFavorite");
+                intentAddFavorite.putExtra("imageLink",imagePath);
+                sendBroadcast(intentAddFavorite);
             }
         });
 
@@ -123,6 +128,9 @@ public class ImageActivity extends AppCompatActivity {
                 Intent intentDelete = new Intent("deleteImage");
                 intentDelete.putExtra("imageIndex", imageIndex);
                 intentDelete.putExtra("imageDate", imageDate);
+                // add by Quan
+                intentDelete.putExtra("imageLink",imagePath);
+                //
                 sendBroadcast(intentDelete);
             }
         });

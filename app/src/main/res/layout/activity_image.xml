@@ -10,12 +10,18 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/custom_button"
+        app:backgroundTint="@null">
         <Button
             android:id="@+id/btnBack"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="◀" />
+            android:text="◀"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/custom_button"
+            app:backgroundTint="@null"/>
 
     </LinearLayout>
 
@@ -47,25 +53,36 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="+" />
+            android:text="Add Album"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/custom_button"
+            app:backgroundTint="@null"/>
         <Button
             android:id="@+id/btnAddFavorite"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="💓" />
+            android:text="💓"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/custom_button"
+            app:backgroundTint="@null"/>
         <Button
             android:id="@+id/btnDelete"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Del"
-            android:drawableLeft="@android:drawable/ic_menu_delete"/>
+            android:text="Delete"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/custom_button"
+            app:backgroundTint="@null"/>
         <Button
             android:id="@+id/btnInfo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Info" />
+            android:text="Info"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/custom_button"
+            app:backgroundTint="@null"/>
     </LinearLayout>
 </LinearLayout>

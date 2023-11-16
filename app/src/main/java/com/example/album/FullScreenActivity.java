@@ -77,7 +77,11 @@ public class FullScreenActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // Your code here.
+                // gửi index của ảnh trong danh sách cho MainActivity bằng broadcast
 
+                Intent intentAddFavorite= new Intent("addFavorite");
+                intentAddFavorite.putExtra("imageLink",imageLink);
+                sendBroadcast(intentAddFavorite);
             }
         });
 

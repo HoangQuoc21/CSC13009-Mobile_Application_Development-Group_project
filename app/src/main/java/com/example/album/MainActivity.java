@@ -27,7 +27,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.karumi.dexter.Dexter;
@@ -55,8 +57,18 @@ public class MainActivity extends AppCompatActivity {
     // Các instance cần thiết để hiển thị ảnh theo group
     // dựa trên thông số ngày được đưa vào bộ nhớ (DATE_TAKEN)
     RecyclerView recyclerView, recyclerViewTrash;
+
+
     ArrayList<imageModel> imageListTrash;
+
+    // Tạo biến linkImage để chứa link của ảnh cần thêm vào.
+    String linkImage="";
+    // Biến listLinkAlbum dùng để chứa danh sách các ảnh của album
+    ArrayList<String> listLinkAlbum;
+
+    /////////////////////////////////////////
     ImageAdapter adapterTrash;
+
     GridLayoutManager layoutManager, layoutManagerTrash;
     ArrayList<String> dates; // thông tin ngày cho từng list ảnh có cùng DATE_TAKEN
     // Hashmap có key là DATE_TAKEN, value là list các model ảnh có cùng DATE_TAKEN đó
@@ -80,7 +92,11 @@ public class MainActivity extends AppCompatActivity {
 
     // danh sách ảnh chỉ được đọc từ thư viện ảnh vào lần đầu tiên mở ứng dụng
     boolean isReadSdcardCalled = false;
-
+    //Tạo mảng dữ liệu
+    String nameAlbum[]={"Favorite"};
+    ArrayList<Album> listAlbum;
+    AlbumAdapter albumAdapter;
+    ListView listViewAlbum;
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
         // danh sách ảnh trong All và Trash
         //imageList = new ArrayList<>();
         imageListTrash = new ArrayList<>();
-
+        listLinkAlbum= new ArrayList<>();
         dates = new ArrayList<>();
         imagesByDate = new HashMap<>();
 
@@ -108,7 +124,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         // load layout album lên để kết nối với các widget, adapter,... trong đó
-        // ...
 
 
         // load layout all lên để kết nối với các widget, adapter,... trong đó
@@ -176,6 +191,33 @@ public class MainActivity extends AppCompatActivity {
             {
                 customActiveButton(btnAlbum); // custom tiêu đề của tab Album
                 loadLayout(R.layout.album, 2); // load layout của tab Album lên frame
+
+                // Xử lý hiện list Album, xử dụng list View
+                listViewAlbum = findViewById(R.id.lvAlbum);
+                listAlbum= new ArrayList<>();
+                for (int i=0;i<nameAlbum.length;i++)
+                {
+                    listAlbum.add(new Album(nameAlbum[i]));
+                }
+                albumAdapter= new AlbumAdapter(MainActivity.this,R.layout.list_albums,listAlbum);
+                listViewAlbum.setAdapter(albumAdapter);
+
+                // Xử lý khi click vào 1 album
+                listViewAlbum.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        //tạo Intent để gửi dữ liệu
+                        Intent albumIntent= new Intent(MainActivity.this,Current_Album.class);
+                        // Gửi name
+                        albumIntent.putExtra("name",nameAlbum[position]);
+                        // Gửi danh sách các link
+                        albumIntent.putStringArrayListExtra("listLink",listLinkAlbum);
+                        // Bắt đầu gửi dữ liệu.
+                        startActivity(albumIntent);
+                    }
+                });
+
+
             }
         });
 
@@ -191,7 +233,12 @@ public class MainActivity extends AppCompatActivity {
 
         // đăng ký broadcast receiver để lắng nghe sự kiện xóa 1 ảnh từ ImageActivity
         IntentFilter filter = new IntentFilter("deleteImage");
+        // Broadcast của click addFavorite
+        IntentFilter filter_addFavorite = new IntentFilter("addFavorite");
+
         registerReceiver(receiver, filter);
+        registerReceiver(receiver, filter_addFavorite);
+
     }
 
 //    @Override
@@ -365,12 +412,29 @@ public class MainActivity extends AppCompatActivity {
                 ArrayList<imageModel> containerList = imagesByDate.get(imageDate);
                 imageModel imgModel = containerList.remove(Integer.parseInt(imageIndex));
                 imageListTrash.add(imgModel);
-
+                /************* add by Quan *****************/
+                linkImage=intent.getStringExtra("imageLink");
+                // Kiểm tra xem chuỗi có tồn tại trong danh sách không
+                if (listLinkAlbum.contains(linkImage)) {
+                    // Xóa chuỗi từ danh sách
+                    listLinkAlbum.remove(linkImage);
+                }
+                /*****************************************/
+                adapterTrash.notifyDataSetChanged();
+                dateAdapter.notifyDataSetChanged();
+            }
+            if("addFavorite".equals(intent.getAction()))
+            {
+                // Lấy link
+                linkImage=intent.getStringExtra("imageLink");
+                // Thêm link ảnh vào trong link Album
+                listLinkAlbum.add(linkImage);
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
             }
         }
     };
+
 
     // custom tiêu đề của tab đang được chọn
     private void customActiveButton(Button clickedButton)
