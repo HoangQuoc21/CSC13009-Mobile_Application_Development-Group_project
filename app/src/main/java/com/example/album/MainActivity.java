@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
         Drawable activeDrawable = getResources().getDrawable(R.drawable.custom_button_active,null);
         activeButton.setBackground(activeDrawable);
 
-        if(isReadSdcardCalled ==false)
+        if(isReadSdcardCalled == false)
         {
             // Kiểm tra cho phép truy cập bộ nhớ ngoài bằng Dexter
             Dexter.withContext(this)

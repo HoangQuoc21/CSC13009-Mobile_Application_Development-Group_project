@@ -49,7 +49,7 @@ public class ImageActivity extends AppCompatActivity {
         Intent myIntent = getIntent();
 
         //Lấy bundle ra hỏi intent
-        Bundle myBundle = myIntent.getBundleExtra("mypackage");
+        Bundle myBundle = myIntent.getBundleExtra("package");
         String imagePath = myBundle.getString("imageLink");
         String imageDate = myBundle.getString("imageDate");
         String imageIndex = myBundle.getString("imageIndex");

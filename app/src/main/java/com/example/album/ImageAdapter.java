@@ -45,7 +45,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.viewHolder> 
                 mybundle.putString("imageDate", dateTaken);
                 mybundle.putString("imageIndex", String.valueOf(position));
 
-                Intent newIntent = new Intent(context, FullScreenActivity.class);
+                Intent newIntent = new Intent(context, ImageActivity.class);
                 newIntent.putExtra("package", mybundle);
                 context.startActivity(newIntent, mybundle);
             }
