@@ -13,10 +13,12 @@ import com.bumptech.glide.Glide;
 import java.util.ArrayList;
 
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.viewHolder> {
+    private String dateTaken;
     private ArrayList<imageModel> list;
     private Context context;
 
-    public ImageAdapter(ArrayList<imageModel> list, Context context) {
+    public ImageAdapter(String dateTaken, ArrayList<imageModel> list, Context context) {
+        this.dateTaken = dateTaken;
         this.list = list;
         this.context = context;
     }
@@ -40,15 +42,14 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.viewHolder> 
                 String imageLink = list.get(position).getPath().toString();
                 Bundle mybundle = new Bundle();
                 mybundle.putString("imageLink", imageLink);
+                mybundle.putString("imageDate", dateTaken);
+                mybundle.putString("imageIndex", String.valueOf(position));
 
-                Intent newIntent = new Intent(context, FullScreenActivity.class);
+                Intent newIntent = new Intent(context, ImageActivity.class);
                 newIntent.putExtra("package", mybundle);
                 context.startActivity(newIntent, mybundle);
             }
         });
-
-
-
     }
 
     @Override
