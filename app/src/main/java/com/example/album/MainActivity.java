@@ -10,13 +10,17 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -24,11 +28,15 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -93,7 +101,9 @@ public class MainActivity extends AppCompatActivity {
     // danh sách ảnh chỉ được đọc từ thư viện ảnh vào lần đầu tiên mở ứng dụng
     boolean isReadSdcardCalled = false;
     //Tạo mảng dữ liệu
-    String nameAlbum[]={"Favorite"};
+    String nameAlbum[];
+    ArrayList<String>listNameAlbum;
+
     ArrayList<Album> listAlbum;
     AlbumAdapter albumAdapter;
     ListView listViewAlbum;
@@ -109,6 +119,9 @@ public class MainActivity extends AppCompatActivity {
         listLinkAlbum= new ArrayList<>();
         dates = new ArrayList<>();
         imagesByDate = new HashMap<>();
+        listNameAlbum= new ArrayList<>();
+        listNameAlbum.add("Favorite");
+        listAlbum= new ArrayList<>();
 
         // khung để đặt 3 layout tương ứng với 3 tab
         frame = findViewById(R.id.frame);
@@ -194,11 +207,18 @@ public class MainActivity extends AppCompatActivity {
 
                 // Xử lý hiện list Album, xử dụng list View
                 listViewAlbum = findViewById(R.id.lvAlbum);
-                listAlbum= new ArrayList<>();
-                for (int i=0;i<nameAlbum.length;i++)
+                // Chuyển ArrayList<String> listNameAlbum sang String nameAlbum[]
+//                nameAlbum=new String[listNameAlbum.size()];
+//                nameAlbum= listNameAlbum.toArray(nameAlbum);
+
+                listAlbum.clear();
+                for (int i=0;i<listNameAlbum.size();i++)
                 {
-                    listAlbum.add(new Album(nameAlbum[i]));
+//                    listAlbum.add(new Album(nameAlbum[i]));
+                    listAlbum.add(new Album(listNameAlbum.get(i)));
+
                 }
+
                 albumAdapter= new AlbumAdapter(MainActivity.this,R.layout.list_albums,listAlbum);
                 listViewAlbum.setAdapter(albumAdapter);
 
@@ -209,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
                         //tạo Intent để gửi dữ liệu
                         Intent albumIntent= new Intent(MainActivity.this,Current_Album.class);
                         // Gửi name
-                        albumIntent.putExtra("name",nameAlbum[position]);
+                        albumIntent.putExtra("name",listNameAlbum.get(position));
                         // Gửi danh sách các link
                         albumIntent.putStringArrayListExtra("listLink",listLinkAlbum);
                         // Bắt đầu gửi dữ liệu.
@@ -217,6 +237,14 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
+                 Button btnAddAlbum;
+                 btnAddAlbum= (Button) findViewById(R.id.btnAlbumAdd);
+                 btnAddAlbum.setOnClickListener(new View.OnClickListener() {
+                     @Override
+                     public void onClick(View v) {
+                         openDialogAddAlbum(Gravity.CENTER);
+                     }
+                 });
 
             }
         });
@@ -241,6 +269,66 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    // Xử lý hiện dialog Add album
+    private void openDialogAddAlbum(int gravity)
+    {
+        final Dialog dialog= new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.layout_dialog_add_album);
+
+        Window window= dialog.getWindow();
+        if(window==null)
+        {
+            return;
+        }
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT,WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        WindowManager.LayoutParams windowAttributes= window.getAttributes();
+        windowAttributes.gravity=gravity;
+        window.setAttributes(windowAttributes);
+
+        if(Gravity.CENTER== gravity)
+        {
+            dialog.setCancelable(true);
+        }
+        else
+        {
+            dialog.setCancelable(false);
+        }
+
+        EditText edtDialogNameAlbum= dialog.findViewById(R.id.edtDialogNameAlbum);
+        Button btnDialogBack= dialog.findViewById(R.id.btnDialogBack);
+        Button btnDialogAdd= dialog.findViewById(R.id.btnDialogAdd);
+
+
+        btnDialogBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+        btnDialogAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this, "Send Feed Back", Toast.LENGTH_SHORT).show();
+                String textName= edtDialogNameAlbum.getText().toString();
+
+                if(listNameAlbum.contains(textName))
+                {
+
+                }
+                else
+                {
+                    listNameAlbum.add(textName);
+                    listAlbum.add(new Album(textName));
+                }
+                albumAdapter.notifyDataSetChanged();
+            }
+        });
+
+        // gọi lệnh Show để hiện Dialog
+        dialog.show();
+    }
 //    @Override
 //    protected void onPause()
 //    {
