@@ -87,7 +87,16 @@ public class ImageActivity extends AppCompatActivity {
         btnDelete = (Button) findViewById(R.id.btnDelete);
         btnInfo = (Button) findViewById(R.id.btnInfo);
         btnBack = (Button) findViewById(R.id.btnBack);
+        // Kiểm tra xem có ẩn hay hiện nút delete hay không?.
+        if (ButtonStatusManager.getInstance().isButtonDisabled()) {
+            btnDelete.setVisibility(View.GONE);
+        }
+        else
+        {
+            btnDelete.setVisibility(View.VISIBLE);
 
+        }
+        //
         // -----------------Xử lý sự kiện click-------------
 
         //Nút Back để trở về Activity chính.

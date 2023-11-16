@@ -73,7 +73,9 @@ public class Current_Album extends AppCompatActivity {
         adapterImageAlbum = new ImageAdapter(null, imageListCurentAlbum,Current_Album.this);
         recyclerViewAlbum.setAdapter(adapterImageAlbum);
         adapterImageAlbum.notifyDataSetChanged();
-
+        // Chỉnh ẩn nút delete của Ảnh khi mở ảnh trong album.
+        ButtonStatusManager.getInstance().setButtonDisabled(true);
+        // Xử lý sự kiện click Back.
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -82,6 +84,10 @@ public class Current_Album extends AppCompatActivity {
         });
 
     }
-    // Đăng ký BroadcastReceiver trong onCreate hoặc onCreateView
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        ButtonStatusManager.getInstance().setButtonDisabled(false);
+    }
 }
