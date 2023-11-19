@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
     RecyclerView recyclerView, recyclerViewTrash;
 
     // Khởi tạo Database
-    SQLiteDatabase db;
+    SQLiteDatabase dbAlbum;
     ArrayList<imageModel> imageListTrash;
 
     // Tạo biến linkImage để chứa link của ảnh cần thêm vào.
@@ -129,20 +129,29 @@ public class MainActivity extends AppCompatActivity {
         // Tạo Database
         // 1. Tao database
         try {
-            db=this.openOrCreateDatabase("MyDatabase",MODE_PRIVATE,null);
+            dbAlbum=this.openOrCreateDatabase("MyDatabase",MODE_PRIVATE,null);
 
         }
         catch (SQLException e){}
         // Tạo bảng chứa danh sách các tên album;
 
-        CreateTable(db,"listNameTable");
+        CreateTable(dbAlbum,"listNameTable");
 
         // Insert giá trị Favorite vào, Favorite chính là album yêu thích.
-        insertDataToTable(db,"listNameTable","Favorite");
+        insertDataToTable(dbAlbum,"listNameTable","Favorite");
 
         // Lấy danh sách tên table từ bảng listNameTable
 
-        getListFromTable(db,listNameAlbum,"listNameTable");
+        getListFromTable(dbAlbum,listNameAlbum,"listNameTable");
+
+        // Khởi tạo dữ liệu cho các Album, nếu Album chưa tồn tại thì tạo Table cho ALbum đó luôn
+        int lenListNameAlbum= listNameAlbum.size();
+        for(int index=0;index<lenListNameAlbum;index++)
+        {
+            CreateTable(dbAlbum,listNameAlbum.get(index));
+        }
+
+
 
 
         // khung để đặt 3 layout tương ứng với 3 tab
@@ -252,6 +261,13 @@ public class MainActivity extends AppCompatActivity {
                         Intent albumIntent= new Intent(MainActivity.this,Current_Album.class);
                         // Gửi name
                         albumIntent.putExtra("name",listNameAlbum.get(position));
+
+                        // Clear data trong listLinkAlbum
+                        listLinkAlbum.clear();
+
+                        // Lấy danh sách các link ảnh của album được chọn.
+                        getListFromTable(dbAlbum,listLinkAlbum,listNameAlbum.get(position));
+
                         // Gửi danh sách các link
                         albumIntent.putStringArrayListExtra("listLink",listLinkAlbum);
                         // Bắt đầu gửi dữ liệu.
@@ -343,7 +359,7 @@ public class MainActivity extends AppCompatActivity {
                 {
                     listNameAlbum.add(textName);
                     listAlbum.add(new Album(textName));
-                    insertDataToTable(db,"listNameTable",textName);
+                    insertDataToTable(dbAlbum,"listNameTable",textName);
                     Toast.makeText(MainActivity.this, "Add Album was successful", Toast.LENGTH_SHORT).show();
                     dialog.dismiss();
                 }
@@ -533,15 +549,27 @@ public class MainActivity extends AppCompatActivity {
                     listLinkAlbum.remove(linkImage);
                 }
                 /*****************************************/
+
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
             }
+
             if("addFavorite".equals(intent.getAction()))
             {
                 // Lấy link
                 linkImage=intent.getStringExtra("imageLink");
                 // Thêm link ảnh vào trong link Album
-                listLinkAlbum.add(linkImage);
+                getListFromTable(dbAlbum,listLinkAlbum,"Favorite");
+                if(isValueExists(dbAlbum,"Favorite",linkImage))
+                {
+                    Toast.makeText(context, "Image was exist in this album", Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    Toast.makeText(context, "Adding image to Favorite Album was successful", Toast.LENGTH_SHORT).show();
+
+                    insertDataToTable(dbAlbum,"Favorite",linkImage);
+                }
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
             }
