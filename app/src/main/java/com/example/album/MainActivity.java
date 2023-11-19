@@ -375,6 +375,7 @@ public class MainActivity extends AppCompatActivity {
                         listNameAlbum.add(textName);
                         listAlbum.add(new Album(textName));
                         insertDataToTable(dbAlbum,"listNameTable",textName);
+                        CreateTable(dbAlbum,textName);
                         Toast.makeText(MainActivity.this, "Add Album was successful", Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
                     }
