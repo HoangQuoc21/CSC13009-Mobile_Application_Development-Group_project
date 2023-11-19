@@ -19,6 +19,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -66,7 +68,8 @@ public class MainActivity extends AppCompatActivity {
     // dựa trên thông số ngày được đưa vào bộ nhớ (DATE_TAKEN)
     RecyclerView recyclerView, recyclerViewTrash;
 
-
+    // Khởi tạo Database
+    SQLiteDatabase db;
     ArrayList<imageModel> imageListTrash;
 
     // Tạo biến linkImage để chứa link của ảnh cần thêm vào.
@@ -120,8 +123,27 @@ public class MainActivity extends AppCompatActivity {
         dates = new ArrayList<>();
         imagesByDate = new HashMap<>();
         listNameAlbum= new ArrayList<>();
-        listNameAlbum.add("Favorite");
         listAlbum= new ArrayList<>();
+
+
+        // Tạo Database
+        // 1. Tao database
+        try {
+            db=this.openOrCreateDatabase("MyDatabase",MODE_PRIVATE,null);
+
+        }
+        catch (SQLException e){}
+        // Tạo bảng chứa danh sách các tên album;
+
+        CreateTable(db,"listNameTable");
+
+        // Insert giá trị Favorite vào, Favorite chính là album yêu thích.
+        insertDataToTable(db,"listNameTable","Favorite");
+
+        // Lấy danh sách tên table từ bảng listNameTable
+
+        getListFromTable(db,listNameAlbum,"listNameTable");
+
 
         // khung để đặt 3 layout tương ứng với 3 tab
         frame = findViewById(R.id.frame);
@@ -310,17 +332,20 @@ public class MainActivity extends AppCompatActivity {
         btnDialogAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(MainActivity.this, "Send Feed Back", Toast.LENGTH_SHORT).show();
                 String textName= edtDialogNameAlbum.getText().toString();
 
                 if(listNameAlbum.contains(textName))
                 {
+                    Toast.makeText(MainActivity.this, "Name Album was Exist", Toast.LENGTH_SHORT).show();
 
                 }
                 else
                 {
                     listNameAlbum.add(textName);
                     listAlbum.add(new Album(textName));
+                    insertDataToTable(db,"listNameTable",textName);
+                    Toast.makeText(MainActivity.this, "Add Album was successful", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
                 }
                 albumAdapter.notifyDataSetChanged();
             }
@@ -610,5 +635,77 @@ public class MainActivity extends AppCompatActivity {
         }
 
         currentLayout = layoutType;
+    }
+    // Create Table
+    public void CreateTable(SQLiteDatabase db, String nameTable)
+    {
+        try {
+            String sqlQuery="CREATE TABLE IF NOT EXISTS "+nameTable+ " ("
+                    + " recID integer PRIMARY KEY autoincrement, "
+                    + " nameText text ); ";
+            db.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+    public void insertDataToTable(SQLiteDatabase db, String nameTable, String data)
+    {
+        if(isValueExists(db,nameTable,data))
+        {
+            return;
+        }
+        try {
+            String sqlQuery="insert into "+nameTable+"(nameText) values ('"+data+"');";
+            db.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+    public void deleteDataInTable(SQLiteDatabase db, String nameTable, String data)
+    {
+        try {
+            String sqlQuery="DELETE From "+nameTable+" Where nameText= '"+ data +"' ;";
+            db.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+    public void getListFromTable(SQLiteDatabase db, ArrayList<String> nameTextList, String nameTable)
+    {
+        try {
+            //3. truy van
+            String sql = "select * from "+ nameTable;
+            Cursor c1 = db.rawQuery(sql, null);
+            c1.moveToPosition(-1);
+
+            while( c1.moveToNext() ){
+                int recId = c1.getInt(0);
+                String text = c1.getString(1);
+
+                nameTextList.add(text);
+            }
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+    public boolean isValueExists(SQLiteDatabase db , String nameTable ,String valueToCheck) {
+        //3. truy van
+        String sql = "select * from "+ nameTable+ " Where nameText = '"+ valueToCheck +"' ;";
+        Cursor c1 = db.rawQuery(sql, null);
+        c1.moveToPosition(-1);
+
+        int count = 0;
+        while( c1.moveToNext() ){
+            ++count;
+        }
+        return count > 0;
     }
 }
