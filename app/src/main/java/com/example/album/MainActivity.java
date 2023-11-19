@@ -303,14 +303,17 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter filter_addFavorite = new IntentFilter("addFavorite");
         // Broadcast của click delete Album
         IntentFilter filter_deleteAlbum = new IntentFilter("deleteAlbum");
-        // Broadcast của click delete Album
+        // Broadcast của click add Image Album
         IntentFilter filter_addImageAlbum = new IntentFilter("addImageToAlbum");
+        // Broadcast của Confirm insert Image to Album
+        IntentFilter filter_insertImageToAlbum = new IntentFilter("addLinkImageToAlbumHadChoosen");
+
 
         registerReceiver(receiver, filter);
         registerReceiver(receiver, filter_addFavorite);
         registerReceiver(receiver, filter_deleteAlbum);
         registerReceiver(receiver, filter_addImageAlbum);
-
+        registerReceiver(receiver, filter_insertImageToAlbum);
 
 
     }
@@ -613,7 +616,13 @@ public class MainActivity extends AppCompatActivity {
                 intentListAlbum.putStringArrayListExtra("listAlbum",listNameAlbum);
                 sendBroadcast(intentListAlbum);
             }
-
+            if("addLinkImageToAlbumHadChoosen".equals(intent.getAction()))
+            {
+                String nameAlbumToAdd=intent.getStringExtra("albumName");
+                String linkImagetoAdd=intent.getStringExtra("imageLink");
+                insertDataToTable(dbAlbum,nameAlbumToAdd,linkImagetoAdd);
+                albumAdapter.notifyDataSetChanged();
+            }
         }
     };
 
