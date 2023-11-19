@@ -301,15 +301,16 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter filter = new IntentFilter("deleteImage");
         // Broadcast của click addFavorite
         IntentFilter filter_addFavorite = new IntentFilter("addFavorite");
-
         // Broadcast của click delete Album
-
         IntentFilter filter_deleteAlbum = new IntentFilter("deleteAlbum");
-
+        // Broadcast của click delete Album
+        IntentFilter filter_addImageAlbum = new IntentFilter("addImageToAlbum");
 
         registerReceiver(receiver, filter);
         registerReceiver(receiver, filter_addFavorite);
         registerReceiver(receiver, filter_deleteAlbum);
+        registerReceiver(receiver, filter_addImageAlbum);
+
 
 
     }
@@ -356,21 +357,27 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String textName= edtDialogNameAlbum.getText().toString();
-
-                if(listNameAlbum.contains(textName))
+                if(textName.equals(""))
                 {
-                    Toast.makeText(MainActivity.this, "Name Album was Exist", Toast.LENGTH_SHORT).show();
-
+                    Toast.makeText(MainActivity.this, "PLease Input Name", Toast.LENGTH_SHORT).show();
                 }
                 else
                 {
-                    listNameAlbum.add(textName);
-                    listAlbum.add(new Album(textName));
-                    insertDataToTable(dbAlbum,"listNameTable",textName);
-                    Toast.makeText(MainActivity.this, "Add Album was successful", Toast.LENGTH_SHORT).show();
-                    dialog.dismiss();
+                    if(listNameAlbum.contains(textName))
+                    {
+                        Toast.makeText(MainActivity.this, "Name Album was Exist", Toast.LENGTH_SHORT).show();
+                    }
+                    else
+                    {
+                        listNameAlbum.add(textName);
+                        listAlbum.add(new Album(textName));
+                        insertDataToTable(dbAlbum,"listNameTable",textName);
+                        Toast.makeText(MainActivity.this, "Add Album was successful", Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+                    }
+                    albumAdapter.notifyDataSetChanged();
                 }
-                albumAdapter.notifyDataSetChanged();
+
             }
         });
 
@@ -598,6 +605,13 @@ public class MainActivity extends AppCompatActivity {
                 getListFromTable(dbAlbum,listNameAlbum,"listNameTable");
 
                 albumAdapter.notifyDataSetChanged();
+            }
+            if("addImageToAlbum".equals(intent.getAction()))
+            {
+                Intent intentListAlbum= new Intent("listAlbumSender");
+                getListFromTable(dbAlbum,listNameAlbum,"listNameTable");
+                intentListAlbum.putStringArrayListExtra("listAlbum",listNameAlbum);
+                sendBroadcast(intentListAlbum);
             }
 
         }

@@ -93,7 +93,11 @@ public class Current_Album extends AppCompatActivity {
                 finish();
             }
         });
-
+        // Kiểm tra tên album có phải là Favorite hay không?, nếu phải thì không cho xóa bằng cách ẩn đi nút xóa
+        if(name.equals("Favorite"))
+        {
+            btnDelete.setVisibility(View.GONE);
+        }
         // Xử lý sự kiện delete Album
         btnDelete.setOnClickListener(new View.OnClickListener() {
             @Override
