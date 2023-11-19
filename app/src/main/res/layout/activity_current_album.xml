@@ -45,7 +45,7 @@
             android:background="@drawable/custom_button"
             app:backgroundTint="@null"/>
         <Button
-            android:id="@+id/btnDeleteAll"
+            android:id="@+id/btnCurrentAlbumDelete"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"

@@ -302,8 +302,15 @@ public class MainActivity extends AppCompatActivity {
         // Broadcast của click addFavorite
         IntentFilter filter_addFavorite = new IntentFilter("addFavorite");
 
+        // Broadcast của click delete Album
+
+        IntentFilter filter_deleteAlbum = new IntentFilter("deleteAlbum");
+
+
         registerReceiver(receiver, filter);
         registerReceiver(receiver, filter_addFavorite);
+        registerReceiver(receiver, filter_deleteAlbum);
+
 
     }
 
@@ -573,6 +580,26 @@ public class MainActivity extends AppCompatActivity {
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
             }
+            if("deleteAlbum".equals(intent.getAction()))
+            {
+                // Lấy Tên của Album muốn delete
+                String nameAlbum= intent.getStringExtra("nameAlbum");
+
+                // Xóa table chứa danh sách link của album
+
+                deleteTable(dbAlbum,nameAlbum);
+                // Xóa tên khỏi danh sách album
+                deleteDataInTable(dbAlbum,"listNameTable",nameAlbum);
+
+
+                // Xóa phần tử album trong listview;
+                listAlbum.removeIf(album -> album.getName().equals(nameAlbum));
+                // Load lại danh sách album
+                getListFromTable(dbAlbum,listNameAlbum,"listNameTable");
+
+                albumAdapter.notifyDataSetChanged();
+            }
+
         }
     };
 
@@ -711,7 +738,7 @@ public class MainActivity extends AppCompatActivity {
             String sql = "select * from "+ nameTable;
             Cursor c1 = db.rawQuery(sql, null);
             c1.moveToPosition(-1);
-
+            nameTextList.clear();
             while( c1.moveToNext() ){
                 int recId = c1.getInt(0);
                 String text = c1.getString(1);
@@ -735,5 +762,16 @@ public class MainActivity extends AppCompatActivity {
             ++count;
         }
         return count > 0;
+    }
+    public void deleteTable(SQLiteDatabase db, String nameTable)
+    {
+        try {
+            String sqlQuery="DROP TABLE IF EXISTS "+nameTable;
+            db.execSQL(sqlQuery);
+        }
+        catch(SQLException e)
+        {
+
+        }
     }
 }
