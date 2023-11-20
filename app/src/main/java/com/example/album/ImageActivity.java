@@ -384,6 +384,14 @@ public class ImageActivity extends AppCompatActivity {
         // gọi lệnh Show để hiện Dialog
         dialog.show();
     }
+    @Override
+    protected void onDestroy()
+    {
+        super.onDestroy();
+
+        // hủy đăng ký broadcast receiver
+        unregisterReceiver(receiver);
+    }
 
     //
 
