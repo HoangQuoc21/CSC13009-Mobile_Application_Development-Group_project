@@ -660,13 +660,64 @@ public class MainActivity extends AppCompatActivity {
             {
                 imageListTrash.clear();
                 adapterTrash.notifyDataSetChanged();
-                dialog.dismiss();
+                dateAdapter.notifyDataSetChanged();
             }
-        });
 
-        // gọi lệnh Show để hiện Dialog
-        dialog.show();
-    }
+            if("addFavorite".equals(intent.getAction()))
+            {
+                // Lấy link
+                linkImage=intent.getStringExtra("imageLink");
+                // Thêm link ảnh vào trong link Album
+                getListFromTable(dbAlbum,listLinkAlbum,"Favorite");
+                if(isValueExists(dbAlbum,"Favorite",linkImage))
+                {
+                    Toast.makeText(context, "Image was exist in this album", Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    Toast.makeText(context, "Adding image to Favorite Album was successful", Toast.LENGTH_SHORT).show();
+
+                    insertDataToTable(dbAlbum,"Favorite",linkImage);
+                }
+//                adapterTrash.notifyDataSetChanged();
+//                dateAdapter.notifyDataSetChanged();
+            }
+            if("deleteAlbum".equals(intent.getAction()))
+            {
+                // Lấy Tên của Album muốn delete
+                String nameAlbum= intent.getStringExtra("nameAlbum");
+
+                // Xóa table chứa danh sách link của album
+
+                deleteTable(dbAlbum,nameAlbum);
+                // Xóa tên khỏi danh sách album
+                deleteDataInTable(dbAlbum,"listNameTable",nameAlbum);
+
+
+                // Xóa phần tử album trong listview;
+                listAlbum.removeIf(album -> album.getName().equals(nameAlbum));
+                // Load lại danh sách album
+                getListFromTable(dbAlbum,listNameAlbum,"listNameTable");
+
+                albumAdapter.notifyDataSetChanged();
+            }
+            if("addImageToAlbum".equals(intent.getAction()))
+            {
+                Intent intentListAlbum= new Intent("listAlbumSender");
+                getListFromTable(dbAlbum,listNameAlbum,"listNameTable");
+                intentListAlbum.putStringArrayListExtra("listAlbum",listNameAlbum);
+                sendBroadcast(intentListAlbum);
+            }
+
+            if("addLinkImageToAlbumHadChoosen".equals(intent.getAction()))
+            {
+                String nameAlbumToAdd=intent.getStringExtra("albumName");
+                String linkImagetoAdd=intent.getStringExtra("imageLink");
+                insertDataToTable(dbAlbum,nameAlbumToAdd,linkImagetoAdd);
+//                albumAdapter.notifyDataSetChanged();
+            }
+        }
+    };
 
 
     // custom tiêu đề của tab đang được chọn
