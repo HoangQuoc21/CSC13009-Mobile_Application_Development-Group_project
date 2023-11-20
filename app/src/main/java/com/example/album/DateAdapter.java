@@ -42,7 +42,7 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> {
         holder.dateTextView.setText(date);
         GridLayoutManager layoutManager = new GridLayoutManager(context,3);
         holder.imageRecyclerView.setLayoutManager(layoutManager);
-        holder.imageRecyclerView.setAdapter(new ImageAdapter(date, images, this.context));
+        holder.imageRecyclerView.setAdapter(new ImageAdapter("1", images, this.context));
     }
 
     @Override

@@ -5,18 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".MainActivity">
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewTrash"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="20px"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    tools:context=".ImageActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,29 +14,44 @@
         android:background="@drawable/custom_button">
 
         <Button
-            android:id="@+id/btnRestoreAll"
+            android:id="@+id/btnAddAlbum"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Restore All"
+            android:text="Add Album"
             android:textColor="#FFFFFF"
             android:background="@drawable/custom_button"
             app:backgroundTint="@null"/>
-
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_weight="2">
-        </FrameLayout>>
 
         <Button
-            android:id="@+id/btnDeleteAll"
+            android:id="@+id/btnAddFavorite"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Delete All"
+            android:text="💓"
             android:textColor="#FFFFFF"
             android:background="@drawable/custom_button"
             app:backgroundTint="@null"/>
+
+        <Button
+            android:id="@+id/btnDelete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Delete"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/custom_button"
+            app:backgroundTint="@null"/>
+
+        <Button
+            android:id="@+id/btnInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Info"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/custom_button"
+            app:backgroundTint="@null"/>
+
     </LinearLayout>
 </LinearLayout>
