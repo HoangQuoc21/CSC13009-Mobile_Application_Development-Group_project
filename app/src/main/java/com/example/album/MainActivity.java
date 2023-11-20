@@ -19,6 +19,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -66,7 +68,8 @@ public class MainActivity extends AppCompatActivity {
     // dựa trên thông số ngày được đưa vào bộ nhớ (DATE_TAKEN)
     RecyclerView recyclerView, recyclerViewTrash;
 
-
+    // Khởi tạo Database
+    SQLiteDatabase dbAlbum;
     ArrayList<imageModel> imageListTrash;
 
     // Tạo biến linkImage để chứa link của ảnh cần thêm vào.
@@ -120,8 +123,36 @@ public class MainActivity extends AppCompatActivity {
         dates = new ArrayList<>();
         imagesByDate = new HashMap<>();
         listNameAlbum= new ArrayList<>();
-        listNameAlbum.add("Favorite");
         listAlbum= new ArrayList<>();
+
+
+        // Tạo Database
+        // 1. Tao database
+        try {
+            dbAlbum=this.openOrCreateDatabase("MyDatabase",MODE_PRIVATE,null);
+
+        }
+        catch (SQLException e){}
+        // Tạo bảng chứa danh sách các tên album;
+
+        CreateTable(dbAlbum,"listNameTable");
+
+        // Insert giá trị Favorite vào, Favorite chính là album yêu thích.
+        insertDataToTable(dbAlbum,"listNameTable","Favorite");
+
+        // Lấy danh sách tên table từ bảng listNameTable
+
+        getListFromTable(dbAlbum,listNameAlbum,"listNameTable");
+
+        // Khởi tạo dữ liệu cho các Album, nếu Album chưa tồn tại thì tạo Table cho ALbum đó luôn
+        int lenListNameAlbum= listNameAlbum.size();
+        for(int index=0;index<lenListNameAlbum;index++)
+        {
+            CreateTable(dbAlbum,listNameAlbum.get(index));
+        }
+
+
+
 
         // khung để đặt 3 layout tương ứng với 3 tab
         frame = findViewById(R.id.frame);
@@ -230,6 +261,13 @@ public class MainActivity extends AppCompatActivity {
                         Intent albumIntent= new Intent(MainActivity.this,Current_Album.class);
                         // Gửi name
                         albumIntent.putExtra("name",listNameAlbum.get(position));
+
+                        // Clear data trong listLinkAlbum
+                        listLinkAlbum.clear();
+
+                        // Lấy danh sách các link ảnh của album được chọn.
+                        getListFromTable(dbAlbum,listLinkAlbum,listNameAlbum.get(position));
+
                         // Gửi danh sách các link
                         albumIntent.putStringArrayListExtra("listLink",listLinkAlbum);
                         // Bắt đầu gửi dữ liệu.
@@ -263,9 +301,20 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter filter = new IntentFilter("deleteImage");
         // Broadcast của click addFavorite
         IntentFilter filter_addFavorite = new IntentFilter("addFavorite");
+        // Broadcast của click delete Album
+        IntentFilter filter_deleteAlbum = new IntentFilter("deleteAlbum");
+        // Broadcast của click add Image Album
+        IntentFilter filter_addImageAlbum = new IntentFilter("addImageToAlbum");
+        // Broadcast của Confirm insert Image to Album
+        IntentFilter filter_insertImageToAlbum = new IntentFilter("addLinkImageToAlbumHadChoosen");
+
 
         registerReceiver(receiver, filter);
         registerReceiver(receiver, filter_addFavorite);
+        registerReceiver(receiver, filter_deleteAlbum);
+        registerReceiver(receiver, filter_addImageAlbum);
+        registerReceiver(receiver, filter_insertImageToAlbum);
+
 
     }
 
@@ -310,19 +359,29 @@ public class MainActivity extends AppCompatActivity {
         btnDialogAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(MainActivity.this, "Send Feed Back", Toast.LENGTH_SHORT).show();
                 String textName= edtDialogNameAlbum.getText().toString();
-
-                if(listNameAlbum.contains(textName))
+                if(textName.equals(""))
                 {
-
+                    Toast.makeText(MainActivity.this, "PLease Input Name", Toast.LENGTH_SHORT).show();
                 }
                 else
                 {
-                    listNameAlbum.add(textName);
-                    listAlbum.add(new Album(textName));
+                    if(listNameAlbum.contains(textName))
+                    {
+                        Toast.makeText(MainActivity.this, "Name Album was Exist", Toast.LENGTH_SHORT).show();
+                    }
+                    else
+                    {
+                        listNameAlbum.add(textName);
+                        listAlbum.add(new Album(textName));
+                        insertDataToTable(dbAlbum,"listNameTable",textName);
+                        CreateTable(dbAlbum,textName);
+                        Toast.makeText(MainActivity.this, "Add Album was successful", Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+                    }
+                    albumAdapter.notifyDataSetChanged();
                 }
-                albumAdapter.notifyDataSetChanged();
+
             }
         });
 
@@ -508,17 +567,62 @@ public class MainActivity extends AppCompatActivity {
                     listLinkAlbum.remove(linkImage);
                 }
                 /*****************************************/
+
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
             }
+
             if("addFavorite".equals(intent.getAction()))
             {
                 // Lấy link
                 linkImage=intent.getStringExtra("imageLink");
                 // Thêm link ảnh vào trong link Album
-                listLinkAlbum.add(linkImage);
+                getListFromTable(dbAlbum,listLinkAlbum,"Favorite");
+                if(isValueExists(dbAlbum,"Favorite",linkImage))
+                {
+                    Toast.makeText(context, "Image was exist in this album", Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    Toast.makeText(context, "Adding image to Favorite Album was successful", Toast.LENGTH_SHORT).show();
+
+                    insertDataToTable(dbAlbum,"Favorite",linkImage);
+                }
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
+            }
+            if("deleteAlbum".equals(intent.getAction()))
+            {
+                // Lấy Tên của Album muốn delete
+                String nameAlbum= intent.getStringExtra("nameAlbum");
+
+                // Xóa table chứa danh sách link của album
+
+                deleteTable(dbAlbum,nameAlbum);
+                // Xóa tên khỏi danh sách album
+                deleteDataInTable(dbAlbum,"listNameTable",nameAlbum);
+
+
+                // Xóa phần tử album trong listview;
+                listAlbum.removeIf(album -> album.getName().equals(nameAlbum));
+                // Load lại danh sách album
+                getListFromTable(dbAlbum,listNameAlbum,"listNameTable");
+
+                albumAdapter.notifyDataSetChanged();
+            }
+            if("addImageToAlbum".equals(intent.getAction()))
+            {
+                Intent intentListAlbum= new Intent("listAlbumSender");
+                getListFromTable(dbAlbum,listNameAlbum,"listNameTable");
+                intentListAlbum.putStringArrayListExtra("listAlbum",listNameAlbum);
+                sendBroadcast(intentListAlbum);
+            }
+            if("addLinkImageToAlbumHadChoosen".equals(intent.getAction()))
+            {
+                String nameAlbumToAdd=intent.getStringExtra("albumName");
+                String linkImagetoAdd=intent.getStringExtra("imageLink");
+                insertDataToTable(dbAlbum,nameAlbumToAdd,linkImagetoAdd);
+                albumAdapter.notifyDataSetChanged();
             }
         }
     };
@@ -610,5 +714,88 @@ public class MainActivity extends AppCompatActivity {
         }
 
         currentLayout = layoutType;
+    }
+    // Create Table
+    public void CreateTable(SQLiteDatabase db, String nameTable)
+    {
+        try {
+            String sqlQuery="CREATE TABLE IF NOT EXISTS "+nameTable+ " ("
+                    + " recID integer PRIMARY KEY autoincrement, "
+                    + " nameText text ); ";
+            db.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+    public void insertDataToTable(SQLiteDatabase db, String nameTable, String data)
+    {
+        if(isValueExists(db,nameTable,data))
+        {
+            return;
+        }
+        try {
+            String sqlQuery="insert into "+nameTable+"(nameText) values ('"+data+"');";
+            db.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+    public void deleteDataInTable(SQLiteDatabase db, String nameTable, String data)
+    {
+        try {
+            String sqlQuery="DELETE From "+nameTable+" Where nameText= '"+ data +"' ;";
+            db.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+    public void getListFromTable(SQLiteDatabase db, ArrayList<String> nameTextList, String nameTable)
+    {
+        try {
+            //3. truy van
+            String sql = "select * from "+ nameTable;
+            Cursor c1 = db.rawQuery(sql, null);
+            c1.moveToPosition(-1);
+            nameTextList.clear();
+            while( c1.moveToNext() ){
+                int recId = c1.getInt(0);
+                String text = c1.getString(1);
+
+                nameTextList.add(text);
+            }
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+    public boolean isValueExists(SQLiteDatabase db , String nameTable ,String valueToCheck) {
+        //3. truy van
+        String sql = "select * from "+ nameTable+ " Where nameText = '"+ valueToCheck +"' ;";
+        Cursor c1 = db.rawQuery(sql, null);
+        c1.moveToPosition(-1);
+
+        int count = 0;
+        while( c1.moveToNext() ){
+            ++count;
+        }
+        return count > 0;
+    }
+    public void deleteTable(SQLiteDatabase db, String nameTable)
+    {
+        try {
+            String sqlQuery="DROP TABLE IF EXISTS "+nameTable;
+            db.execSQL(sqlQuery);
+        }
+        catch(SQLException e)
+        {
+
+        }
     }
 }

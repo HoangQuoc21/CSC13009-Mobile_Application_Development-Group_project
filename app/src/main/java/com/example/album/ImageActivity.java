@@ -1,23 +1,38 @@
 package com.example.album;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 public class ImageActivity extends AppCompatActivity {
     private static final int REQUEST_WRITE_STORAGE = 112;
@@ -39,7 +54,22 @@ public class ImageActivity extends AppCompatActivity {
     private float lastX = 0.0f;
     private float lastY = 0.0f;
 
+    ListView listViewAlbum;
     Uri imageUri;
+    String nameAlbumToAdd="";
+
+    String imagePath;
+    ArrayList<String>listNameAlbum= new ArrayList<>();
+    // Nhận Dữ liệu danh sách Album từ activity
+    BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if("listAlbumSender".equals(intent.getAction()))
+            {
+                listNameAlbum=intent.getStringArrayListExtra("listAlbum");
+            }
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,7 +80,7 @@ public class ImageActivity extends AppCompatActivity {
 
         //Lấy bundle ra hỏi intent
         Bundle myBundle = myIntent.getBundleExtra("package");
-        String imagePath = myBundle.getString("imageLink");
+        imagePath = myBundle.getString("imageLink");
         String imageDate = myBundle.getString("imageDate");
         String imageIndex = myBundle.getString("imageIndex");
 
@@ -80,7 +110,13 @@ public class ImageActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         ;
+        //Nhận dữ liệu List Name Album
+        Intent intentAddImageToAlbum= new Intent("addImageToAlbum");
 
+        intentAddImageToAlbum.putExtra("Temp","");
+
+        sendBroadcast(intentAddImageToAlbum);
+        //
         // Kết nối các nút Button với layout
         btnAddAlbum = (Button) findViewById(R.id.btnAddAlbum);
         btnAddFavorite = (Button) findViewById(R.id.btnAddFavorite);
@@ -112,6 +148,9 @@ public class ImageActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // Your code here.
+                Toast.makeText(ImageActivity.this, "Add", Toast.LENGTH_SHORT).show();
+
+                openDialogAddAlbum(Gravity.CENTER);
             }
         });
 
@@ -210,6 +249,10 @@ public class ImageActivity extends AppCompatActivity {
                 }
             }
         });
+        // Broadcast của click delete Album
+        IntentFilter filter = new IntentFilter("listAlbumSender");
+
+        registerReceiver(receiver, filter);
     }
     //Xử lý scale ảnh (Zoom in, Zoom out);
 
@@ -256,4 +299,92 @@ public class ImageActivity extends AppCompatActivity {
             return true;
         }
     }
+    // Xử lý dialog để add album;
+    private void openDialogAddAlbum(int gravity)
+    {
+        final Dialog dialog= new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.add_image_to_album);
+
+        Window window= dialog.getWindow();
+        if(window==null)
+        {
+            return;
+        }
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT,WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        WindowManager.LayoutParams windowAttributes= window.getAttributes();
+        windowAttributes.gravity=gravity;
+        window.setAttributes(windowAttributes);
+
+        if(Gravity.CENTER== gravity)
+        {
+            dialog.setCancelable(true);
+        }
+        else
+        {
+            dialog.setCancelable(false);
+        }
+
+        // Hiện listView
+
+        listViewAlbum =(ListView)dialog.findViewById(R.id.lvAddImageToAlbum);
+        Button btnDialogCheckAddImageBack=dialog.findViewById(R.id.btnDialogCheckAddImageBack);
+        Button btnDialogCheckAddImageConfirm=dialog.findViewById(R.id.btnDialogCheckAddImageConfirm);
+        TextView txtNameAlbumToAdd= dialog.findViewById(R.id.txtNameAlbumToAdd);
+        ArrayList<Album> listAlbum= new ArrayList<>();
+
+
+        for (int i=0;i<listNameAlbum.size();i++)
+        {
+//                    listAlbum.add(new Album(nameAlbum[i]));
+            listAlbum.add(new Album(listNameAlbum.get(i)));
+        }
+
+        AlbumAdapter albumAdapter= new AlbumAdapter(ImageActivity.this,R.layout.list_albums,listAlbum);
+        listViewAlbum.setAdapter(albumAdapter);
+        // Xử lý khi click vào 1 album
+        listViewAlbum.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                txtNameAlbumToAdd.setText(listNameAlbum.get(position));
+                nameAlbumToAdd=listNameAlbum.get(position);
+            }
+        });
+        // Xử lý click Back.
+        btnDialogCheckAddImageBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        // Xử lý click Back.
+        btnDialogCheckAddImageConfirm.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(nameAlbumToAdd.equals(""))
+                {
+                    Toast.makeText(ImageActivity.this, "Please Choose Album to Add", Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    // gửi index của ảnh trong danh sách cho MainActivity bằng broadcast
+
+                    Intent addLinkImageToAlbumHadChoosen= new Intent("addLinkImageToAlbumHadChoosen");
+                    addLinkImageToAlbumHadChoosen.putExtra("imageLink",imagePath);
+                    addLinkImageToAlbumHadChoosen.putExtra("albumName",nameAlbumToAdd);
+                    sendBroadcast(addLinkImageToAlbumHadChoosen);
+                    Toast.makeText(ImageActivity.this, "Adding this image to album was Successful", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                }
+            }
+        });
+
+        // gọi lệnh Show để hiện Dialog
+        dialog.show();
+    }
+
+    //
+
 }
