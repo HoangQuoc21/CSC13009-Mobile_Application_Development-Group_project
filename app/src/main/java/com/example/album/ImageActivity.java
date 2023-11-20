@@ -1,6 +1,7 @@
 package com.example.album;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
 
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
@@ -15,9 +16,11 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -35,13 +38,19 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 public class ImageActivity extends AppCompatActivity {
+    View frame;
     private static final int REQUEST_WRITE_STORAGE = 112;
 
-    //Khai báo các nút Button
-    Button btnAddAlbum, btnAddFavorite, btnDelete, btnInfo, btnBack;
+    // Button Back ở header
+    Button btnBack;
+
+    // Button ở footer của image bình thường
+    Button btnAddAlbum, btnAddFavorite, btnDelete, btnInfo;
+
+    // Button ở footer của image trong Trash
+    Button btnDeleteTrash, btnRestore;
 
     //Khai báo ImageView
-
     ImageView imageView;
 
     //Khai báo ScaleGestureDetector dùng để scale ảnh (Zoom in, Zoom out)
@@ -60,6 +69,7 @@ public class ImageActivity extends AppCompatActivity {
 
     String imagePath;
     ArrayList<String>listNameAlbum= new ArrayList<>();
+
     // Nhận Dữ liệu danh sách Album từ activity
     BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
@@ -70,19 +80,204 @@ public class ImageActivity extends AppCompatActivity {
             }
         }
     };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image);
 
+        frame = findViewById(R.id.frame);
+
         //Lấy dữ liệu từ Main Activity
         Intent myIntent = getIntent();
 
-        //Lấy bundle ra hỏi intent
+        //Lấy bundle ra khỏi intent
         Bundle myBundle = myIntent.getBundleExtra("package");
+        // link ảnh
         imagePath = myBundle.getString("imageLink");
+        // dateTaken của ảnh
         String imageDate = myBundle.getString("imageDate");
+        // vị trí của ảnh trong 1 date (khi là ảnh bình thường)
+        // hoặc vị trí của ảnh trong imageListTrash (khi là ảnh trong Trash)
         String imageIndex = myBundle.getString("imageIndex");
+        // dùng để dán layout footer đúng với với ảnh bình thường hoặc ảnh trong Trash
+        String footerLayout = myBundle.getString("footer");
+
+
+        // khi là ảnh bình thường
+        if(footerLayout.equals("1"))
+        {
+            // load layout footer của ảnh bình thường
+            loadLayout(R.layout.image_all);
+
+            //Nhận dữ liệu List Name Album
+            Intent intentAddImageToAlbum= new Intent("addImageToAlbum");
+            intentAddImageToAlbum.putExtra("Temp","");
+            sendBroadcast(intentAddImageToAlbum);
+
+            // Kết nối các nút Button với layout
+            btnAddAlbum = (Button) findViewById(R.id.btnAddAlbum);
+            btnAddFavorite = (Button) findViewById(R.id.btnAddFavorite);
+            btnDelete = (Button) findViewById(R.id.btnDelete);
+            btnInfo = (Button) findViewById(R.id.btnInfo);
+
+
+            // Kiểm tra xem có ẩn hay hiện nút delete hay không?.
+            if (ButtonStatusManager.getInstance().isButtonDisabled()) {
+                btnDelete.setVisibility(View.GONE);
+            }
+            else
+            {
+                btnDelete.setVisibility(View.VISIBLE);
+            }
+
+
+            // -----------------Xử lý sự kiện click-------------
+            //Nút thêm Album
+            btnAddAlbum.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Your code here.
+                    Toast.makeText(ImageActivity.this, "Add", Toast.LENGTH_SHORT).show();
+
+                    openDialogAddAlbum(Gravity.CENTER);
+                }
+            });
+
+            //Nút thêm vào Album yêu thích
+            btnAddFavorite.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Your code here.
+//                Toast.makeText(ImageActivity.this, "Add favorite", Toast.LENGTH_SHORT).show();
+                    // gửi index của ảnh trong danh sách cho MainActivity bằng broadcast
+
+                    Intent intentAddFavorite= new Intent("addFavorite");
+                    intentAddFavorite.putExtra("imageLink",imagePath);
+                    sendBroadcast(intentAddFavorite);
+                }
+            });
+
+            //Nút Delete
+            btnDelete.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    openDialogDelete(imageDate,imageIndex,imagePath);
+                }
+            });
+
+            //Nút Xem thông tin
+            btnInfo.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Your code here.
+                    //Tạo biến File giúp đọc file
+                    File file = new File(imagePath);
+
+                    //tạo input stream để đọc vào Uri của ảnh
+                    InputStream in = null;
+                    try {
+                        //Đọc thông tin ảnh
+                        String name = file.getName();
+                        String place = file.getPath();
+
+                        //đọc uri ảnh
+                        in = getContentResolver().openInputStream(imageUri);
+
+                        //tạo biến exifinterface để đọc các thông tin exif
+                        ExifInterface exif = new ExifInterface(in);
+                        // Now you can extract any Exif tag you want
+                        // Assuming the image is a JPEG or supported raw format
+
+                        //lấy dữ liệu exif
+                        // Get some exif attributes, you can get more from the documentation
+                        String dateTime = exif.getAttribute(ExifInterface.TAG_DATETIME);
+                        String imageLength = exif.getAttribute(ExifInterface.TAG_IMAGE_LENGTH);
+                        String imageWidth = exif.getAttribute(ExifInterface.TAG_IMAGE_WIDTH);
+                        String make = exif.getAttribute(ExifInterface.TAG_MAKE);
+                        String model = exif.getAttribute(ExifInterface.TAG_MODEL);
+
+
+                        //tạo string chứa các thông tin exif
+                        // Create a StringBuilder to format the exif information
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("Name: ").append(name).append("\n");
+                        sb.append("Saved place: ").append(place).append("\n");
+                        sb.append("Date and time: ").append(dateTime).append("\n");
+                        sb.append("Image length: ").append(imageLength).append(" pixels\n");
+                        sb.append("Image width: ").append(imageWidth).append(" pixels\n");
+                        sb.append("Camera make: ").append(make).append("\n");
+                        sb.append("Camera model: ").append(model).append("\n");
+
+                        //tạo hộp thoại dialog để hiển thị thông tin exif
+                        // Create an AlertDialog.Builder object to build the dialog
+                        AlertDialog.Builder builder = new AlertDialog.Builder(ImageActivity.this);
+                        builder.setTitle("Image Information");
+                        builder.setMessage(sb.toString());
+                        builder.setPositiveButton("OK", null);
+
+                        //hiển thị hộp thoại dialog
+                        // Create and show the dialog
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+
+                    } catch (IOException e) {
+                        // Handle any errors
+                    } finally {
+                        if (in != null) {
+                            try {
+                                in.close();
+                            } catch (IOException ignored) {}
+                        }
+                    }
+                }
+            });
+
+            // Broadcast của click delete Album
+            IntentFilter filter = new IntentFilter("listAlbumSender");
+            registerReceiver(receiver, filter);
+        }
+
+        // khi là ảnh trong Trash
+        else
+        {
+            // load layout footer của ảnh trong Trash
+            loadLayout(R.layout.image_trash);
+
+            // Kết nối các nút Button với layout
+            btnRestore = (Button) findViewById(R.id.btnRestore);
+            btnDeleteTrash = (Button) findViewById(R.id.btnDelete);
+
+            // xử lý sự kiện nhấn nút Restore 1 ảnh trong Trash
+            btnRestore.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intentRestore = new Intent("restoreImage");
+                    intentRestore.putExtra("imageIndexTrash", imageIndex);
+
+                    sendBroadcast(intentRestore);
+                    finish();
+                }
+            });
+
+            // xử lý sự kiện nhấn nút Delete 1 ảnh trong Trash
+            btnDeleteTrash.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    openDialogDeleteTrash(imageIndex);
+                }
+            });
+        }
+
+
+        //Nút Back để trở về Activity chính.
+        btnBack = (Button) findViewById(R.id.btnBack);
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
 
         try {
             // parse String path to Uri to create bitmap
@@ -109,154 +304,10 @@ public class ImageActivity extends AppCompatActivity {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        ;
-        //Nhận dữ liệu List Name Album
-        Intent intentAddImageToAlbum= new Intent("addImageToAlbum");
-
-        intentAddImageToAlbum.putExtra("Temp","");
-
-        sendBroadcast(intentAddImageToAlbum);
-        //
-        // Kết nối các nút Button với layout
-        btnAddAlbum = (Button) findViewById(R.id.btnAddAlbum);
-        btnAddFavorite = (Button) findViewById(R.id.btnAddFavorite);
-        btnDelete = (Button) findViewById(R.id.btnDelete);
-        btnInfo = (Button) findViewById(R.id.btnInfo);
-        btnBack = (Button) findViewById(R.id.btnBack);
-        // Kiểm tra xem có ẩn hay hiện nút delete hay không?.
-        if (ButtonStatusManager.getInstance().isButtonDisabled()) {
-            btnDelete.setVisibility(View.GONE);
-        }
-        else
-        {
-            btnDelete.setVisibility(View.VISIBLE);
-
-        }
-        //
-        // -----------------Xử lý sự kiện click-------------
-
-        //Nút Back để trở về Activity chính.
-        btnBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
-
-        //Nút thêm Album
-        btnAddAlbum.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Your code here.
-                Toast.makeText(ImageActivity.this, "Add", Toast.LENGTH_SHORT).show();
-
-                openDialogAddAlbum(Gravity.CENTER);
-            }
-        });
-
-        //Nút thêm vào Album yêu thích
-        btnAddFavorite.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Your code here.
-//                Toast.makeText(ImageActivity.this, "Add favorite", Toast.LENGTH_SHORT).show();
-                // gửi index của ảnh trong danh sách cho MainActivity bằng broadcast
-
-                Intent intentAddFavorite= new Intent("addFavorite");
-                intentAddFavorite.putExtra("imageLink",imagePath);
-                sendBroadcast(intentAddFavorite);
-            }
-        });
-
-        //Nút Delete
-        btnDelete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // gửi index của ảnh trong danh sách cho MainActivity bằng broadcast
-                Intent intentDelete = new Intent("deleteImage");
-                intentDelete.putExtra("imageIndex", imageIndex);
-                intentDelete.putExtra("imageDate", imageDate);
-                // add by Quan
-                intentDelete.putExtra("imageLink",imagePath);
-                //
-                sendBroadcast(intentDelete);
-            }
-        });
-
-        //Nút Xem thông tin
-        btnInfo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Your code here.
-                //Tạo biến File giúp đọc file
-                File file = new File(imagePath);
-
-                //tạo input stream để đọc vào Uri của ảnh
-                InputStream in = null;
-                try {
-                    //Đọc thông tin ảnh
-                    String name = file.getName();
-                    String place = file.getPath();
-
-                    //đọc uri ảnh
-                    in = getContentResolver().openInputStream(imageUri);
-
-                    //tạo biến exifinterface để đọc các thông tin exif
-                    ExifInterface exif = new ExifInterface(in);
-                    // Now you can extract any Exif tag you want
-                    // Assuming the image is a JPEG or supported raw format
-
-                    //lấy dữ liệu exif
-                    // Get some exif attributes, you can get more from the documentation
-                    String dateTime = exif.getAttribute(ExifInterface.TAG_DATETIME);
-                    String imageLength = exif.getAttribute(ExifInterface.TAG_IMAGE_LENGTH);
-                    String imageWidth = exif.getAttribute(ExifInterface.TAG_IMAGE_WIDTH);
-                    String make = exif.getAttribute(ExifInterface.TAG_MAKE);
-                    String model = exif.getAttribute(ExifInterface.TAG_MODEL);
-
-
-                    //tạo string chứa các thông tin exif
-                    // Create a StringBuilder to format the exif information
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("Name: ").append(name).append("\n");
-                    sb.append("Saved place: ").append(place).append("\n");
-                    sb.append("Date and time: ").append(dateTime).append("\n");
-                    sb.append("Image length: ").append(imageLength).append(" pixels\n");
-                    sb.append("Image width: ").append(imageWidth).append(" pixels\n");
-                    sb.append("Camera make: ").append(make).append("\n");
-                    sb.append("Camera model: ").append(model).append("\n");
-
-                    //tạo hộp thoại dialog để hiển thị thông tin exif
-                    // Create an AlertDialog.Builder object to build the dialog
-                    AlertDialog.Builder builder = new AlertDialog.Builder(ImageActivity.this);
-                    builder.setTitle("Image Information");
-                    builder.setMessage(sb.toString());
-                    builder.setPositiveButton("OK", null);
-
-                    //hiển thị hộp thoại dialog
-                    // Create and show the dialog
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
-
-                } catch (IOException e) {
-                    // Handle any errors
-                } finally {
-                    if (in != null) {
-                        try {
-                            in.close();
-                        } catch (IOException ignored) {}
-                    }
-                }
-            }
-        });
-        // Broadcast của click delete Album
-        IntentFilter filter = new IntentFilter("listAlbumSender");
-
-        registerReceiver(receiver, filter);
     }
-    //Xử lý scale ảnh (Zoom in, Zoom out);
 
-    //Xử lý event chạm vòa ảnh (Move)
+
+    //Xử lý event chạm vào ảnh (Move)
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
@@ -299,7 +350,16 @@ public class ImageActivity extends AppCompatActivity {
             return true;
         }
     }
-    // Xử lý dialog để add album;
+
+    // load layout footer tương ứng với 2 trường hợp: ảnh bình thường và ảnh trong Trash
+    private void loadLayout(int layoutResId)
+    {
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View footerContent = inflater.inflate(layoutResId, (ViewGroup) frame, false);
+        ((ViewGroup) frame).addView(footerContent);
+    }
+
+    // Xử lý dialog để add album
     private void openDialogAddAlbum(int gravity)
     {
         final Dialog dialog= new Dialog(this);
@@ -385,6 +445,103 @@ public class ImageActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    //
+     // Xử lý hiện dialog xác nhận chuyển vào Thùng rác
+    private void openDialogDelete(String imageDate, String imageIndex, String imagePath)
+    {
+        final Dialog dialog= new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.layout_dialog_move_to_trash);
 
+        Window window= dialog.getWindow();
+        if(window==null)
+        {
+            return;
+        }
+
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT,WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        WindowManager.LayoutParams windowAttributes= window.getAttributes();
+        windowAttributes.gravity= Gravity.BOTTOM;
+        window.setAttributes(windowAttributes);
+        dialog.setCancelable(true);
+
+        Button btnDialogCancel= dialog.findViewById(R.id.btnDialogCancel);
+        Button btnDialogMove= dialog.findViewById(R.id.btnDialogMove);
+
+        // Khi nhấn nút Cancel của Dialog
+        btnDialogCancel.setOnClickListener(new View.OnClickListener() {
+             @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        // Khi nhấn nút Move của Dialog
+        btnDialogMove.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v)
+            {
+                Intent intentDelete = new Intent("deleteImage");
+                intentDelete.putExtra("imageIndex", imageIndex);
+                intentDelete.putExtra("imageDate", imageDate);
+                // add by Quan
+                intentDelete.putExtra("imageLink",imagePath);
+                //
+                sendBroadcast(intentDelete);
+                finish();
+            }
+        });
+
+        // gọi lệnh Show để hiện Dialog
+        dialog.show();
+    }
+
+
+    // Xử lý hiện dialog xác nhận xóa ảnh khỏi thùng rác (xóa vĩnh viễn)
+    private void openDialogDeleteTrash(String imageIndex)
+    {
+        final Dialog dialog= new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.layout_dialog_delete_trash);
+
+        Window window= dialog.getWindow();
+        if(window==null)
+        {
+            return;
+        }
+
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT,WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        WindowManager.LayoutParams windowAttributes= window.getAttributes();
+        windowAttributes.gravity= Gravity.BOTTOM;
+        window.setAttributes(windowAttributes);
+        dialog.setCancelable(true);
+
+        Button btnDialogCancel= dialog.findViewById(R.id.btnDialogCancel);
+        Button btnDialogDelete= dialog.findViewById(R.id.btnDialogDelete);
+
+        // Khi nhấn nút Cancel của Dialog
+        btnDialogCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        // Khi nhấn nút Delete của Dialog
+        btnDialogDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v)
+            {
+                Intent intentDeleteTrash = new Intent("deleteTrash");
+                intentDeleteTrash.putExtra("imageIndexTrash", imageIndex);
+
+                sendBroadcast(intentDeleteTrash);
+                finish();
+            }
+        });
+
+        // gọi lệnh Show để hiện Dialog
+        dialog.show();
+    }
 }

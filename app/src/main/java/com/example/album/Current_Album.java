@@ -68,7 +68,7 @@ public class Current_Album extends AppCompatActivity {
                     Bitmap bm = BitmapFactory.decodeStream(
                             getContentResolver().openInputStream(imageUri));
                     if (bm != null) {
-                        imageModel imageuri= new imageModel(0,imageUri);
+                        imageModel imageuri= new imageModel(0, null, imageUri);
                         imageListCurentAlbum.add(imageuri);
                     }
                 }
@@ -81,7 +81,7 @@ public class Current_Album extends AppCompatActivity {
         recyclerViewAlbum = findViewById(R.id.recyclerViewAlbum);
         layoutManagerAlbum = new GridLayoutManager(this, 3);
         recyclerViewAlbum.setLayoutManager(layoutManagerAlbum);
-        adapterImageAlbum = new ImageAdapter(null, imageListCurentAlbum,Current_Album.this);
+        adapterImageAlbum = new ImageAdapter("1", imageListCurentAlbum,Current_Album.this);
         recyclerViewAlbum.setAdapter(adapterImageAlbum);
         adapterImageAlbum.notifyDataSetChanged();
         // Chỉnh ẩn nút delete của Ảnh khi mở ảnh trong album.

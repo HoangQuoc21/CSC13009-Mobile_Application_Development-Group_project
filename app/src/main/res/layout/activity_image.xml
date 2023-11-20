@@ -8,12 +8,13 @@
     android:layout_gravity="center">
 
     <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="124px"
         android:orientation="horizontal"
         android:textColor="#FFFFFF"
         android:background="@drawable/custom_button"
         app:backgroundTint="@null">
+
         <Button
             android:id="@+id/btnBack"
             android:layout_width="wrap_content"
@@ -31,58 +32,21 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_gravity="center"
-        android:layout_weight="1"
-        >
+        android:layout_weight="1" >
 
         <ImageView
             android:id="@+id/imageView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:adjustViewBounds="true"
-            android:src="@mipmap/ic_launcher"
-            />
+            android:src="@mipmap/ic_launcher" />
+
     </LinearLayout>
 
-    <LinearLayout
+    <FrameLayout
+        android:id="@+id/frame"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        >
-        <Button
-            android:id="@+id/btnAddAlbum"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Add Album"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/custom_button"
-            app:backgroundTint="@null"/>
-        <Button
-            android:id="@+id/btnAddFavorite"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="💓"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/custom_button"
-            app:backgroundTint="@null"/>
-        <Button
-            android:id="@+id/btnDelete"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Delete"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/custom_button"
-            app:backgroundTint="@null"/>
-        <Button
-            android:id="@+id/btnInfo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Info"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/custom_button"
-            app:backgroundTint="@null"/>
-    </LinearLayout>
+        android:layout_height="124px">
+    </FrameLayout>
+
 </LinearLayout>
