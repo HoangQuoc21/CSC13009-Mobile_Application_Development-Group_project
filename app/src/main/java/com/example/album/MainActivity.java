@@ -30,9 +30,12 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.SearchView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.karumi.dexter.Dexter;
@@ -95,6 +98,9 @@ public class MainActivity extends AppCompatActivity {
     // danh sách ảnh chỉ được đọc từ thư viện ảnh vào lần đầu tiên mở ứng dụng
     boolean isReadSdcardCalled = false;
 
+    //Spinner và SearchView phục vụ cho việc filter ảnh theo thông tin exif
+    SearchView exifSearchView;
+    Spinner exifSpinner;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -220,6 +226,20 @@ public class MainActivity extends AppCompatActivity {
         // Tạo và gắn dateAdapter có chức năng tạo các pool ảnh có cùng DATE_TAKEN cho recyclerView chính
         dateAdapter = new DateAdapter(dates, imagesByDate, this);
         recyclerView.setAdapter(dateAdapter);
+        //=====================================================================================================
+        //set du lieu cho spinner
+        String[] arraySpinner = new String[] {
+                "Name", "Saved Place", "Date taken", "Length", "Width", "Camera make", "Camera model"
+        };
+        exifSpinner = (Spinner) findViewById(R.id.exifSpinner);
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_item, arraySpinner);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        exifSpinner.setAdapter(spinnerAdapter);
+        //=====================================================================================================
+        //anh xa filter
+        exifSearchView = findViewById(R.id.exifSearchView);
+        //=====================================================================================================
         nAll = 1;
 
 
@@ -840,4 +860,17 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
+
+    //=====================================================================================================
+    //phuong thuc onBackPressed de xu ly khi khong su dung filter nua
+    @Override
+    public void onBackPressed() {
+        if(!exifSearchView.isIconified()){
+            exifSearchView.setIconified(true);
+            return;
+        }
+        super.onBackPressed();
+    }
 }
+
+
