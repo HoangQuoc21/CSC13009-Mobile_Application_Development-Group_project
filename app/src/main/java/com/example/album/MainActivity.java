@@ -528,8 +528,8 @@ public class MainActivity extends AppCompatActivity {
 
                     insertDataToTable(dbAlbum,"Favorite",linkImage);
                 }
-                adapterTrash.notifyDataSetChanged();
-                dateAdapter.notifyDataSetChanged();
+                //adapterTrash.notifyDataSetChanged();
+                //dateAdapter.notifyDataSetChanged();
             }
 
             if("deleteAlbum".equals(intent.getAction()))
@@ -565,7 +565,7 @@ public class MainActivity extends AppCompatActivity {
                 String nameAlbumToAdd=intent.getStringExtra("albumName");
                 String linkImagetoAdd=intent.getStringExtra("imageLink");
                 insertDataToTable(dbAlbum,nameAlbumToAdd,linkImagetoAdd);
-                albumAdapter.notifyDataSetChanged();
+                //albumAdapter.notifyDataSetChanged();
             }
         }
     };
