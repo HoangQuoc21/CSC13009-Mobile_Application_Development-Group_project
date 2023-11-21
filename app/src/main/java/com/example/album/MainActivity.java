@@ -464,17 +464,13 @@ public class MainActivity extends AppCompatActivity {
                 imageModel imgModel = containerList.remove(Integer.parseInt(imageIndex));
                 imageListTrash.add(0, imgModel);
 
-                /************* add by Quan *****************/
-                linkImage=intent.getStringExtra("imageLink");
-                // Kiểm tra xem chuỗi có tồn tại trong danh sách không
-                if (listLinkAlbum.contains(linkImage)) {
-                    // Xóa chuỗi từ danh sách
-                    listLinkAlbum.remove(linkImage);
-                }
-                /*****************************************/
 
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
+                /************* add by Quan *****************/
+                linkImage=intent.getStringExtra("imageLink");
+                deleteDataFromAllTable(dbAlbum,linkImage);
+                /*****************************************/
             }
 
             // lắng nghe sự kiện bấm nút Restore: di chuyển ảnh đó từ Trash qua All
@@ -777,7 +773,7 @@ public class MainActivity extends AppCompatActivity {
         currentLayout = layoutType;
     }
 
-    // Create Table
+    // Create Table, hàm dùng để tạo bảng trong database
     public void CreateTable(SQLiteDatabase db, String nameTable)
     {
         try {
@@ -791,6 +787,8 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
+
+    // insertDataToTable là hàm dùng để insert data vào trong table
     public void insertDataToTable(SQLiteDatabase db, String nameTable, String data)
     {
         if(isValueExists(db,nameTable,data))
@@ -806,6 +804,8 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
+
+    //deleteDataInTable là hàm dùng để xóa data khỏi table
     public void deleteDataInTable(SQLiteDatabase db, String nameTable, String data)
     {
         try {
@@ -817,6 +817,8 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
+
+    //getListFromTable là hàm dùng để lấy chuỗi các data từ table
     public void getListFromTable(SQLiteDatabase db, ArrayList<String> nameTextList, String nameTable)
     {
         try {
@@ -837,6 +839,8 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
+
+    // isValueExists là hàm dùng để kiểm tra xem giá trị valueToCheck đã tồn tại trong table hay chưa
     public boolean isValueExists(SQLiteDatabase db , String nameTable ,String valueToCheck) {
         //3. truy van
         String sql = "select * from "+ nameTable+ " Where nameText = '"+ valueToCheck +"' ;";
@@ -849,6 +853,8 @@ public class MainActivity extends AppCompatActivity {
         }
         return count > 0;
     }
+
+    // deleteTable là hàm dùng để xóa table
     public void deleteTable(SQLiteDatabase db, String nameTable)
     {
         try {
@@ -861,7 +867,35 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //=====================================================================================================
+    //
+    public void deleteDataFromAllTable(SQLiteDatabase db, String data)
+    {
+        try {
+
+            //3. truy van
+            String sql = "select * from listNameTable";
+            Cursor c1 = db.rawQuery(sql, null);
+            c1.moveToPosition(-1);
+            while( c1.moveToNext() ){
+                int recId = c1.getInt(0);
+                String nameTable = c1.getString(1);
+
+                deleteDataInTable(db,nameTable,data);
+            }
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+
+    //
+    public void restoreDataIntoAllTable(SQLiteDatabase db)
+    {
+
+    }
+
+    //================= Add by Quoc ====================
     //phuong thuc onBackPressed de xu ly khi khong su dung filter nua
     @Override
     public void onBackPressed() {
@@ -870,7 +904,6 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         super.onBackPressed();
-    }
 }
 
 
