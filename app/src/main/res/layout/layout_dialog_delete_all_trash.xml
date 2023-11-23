@@ -30,6 +30,7 @@
             android:layout_weight="1"
             android:layout_marginRight="10dp"
             android:text="Cancel"
+            android:textColor="@color/white"
             android:textSize="15sp"
             android:background="@drawable/custom_dialog_button"
             app:backgroundTint="@null"/>
@@ -40,6 +41,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Delete"
+            android:textColor="@color/white"
             android:textSize="15sp"
             android:background="@drawable/custom_dialog_button"
             app:backgroundTint="@null" />

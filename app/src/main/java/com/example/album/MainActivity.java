@@ -48,11 +48,13 @@ import java.util.Date;
 import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
+    SQLiteDatabase myDB; //database lưu tất cả ảnh trong ứng dụng (cả trong All và Trash)
     RecyclerView recyclerView;
     ArrayList<String> dates; // thông tin ngày cho từng list ảnh có cùng DATE_TAKEN
     // Hashmap có key là DATE_TAKEN, value là list các model ảnh có cùng DATE_TAKEN đó
-    HashMap<String, ArrayList<imageModel>> imagesByDate;
+    HashMap<String, ArrayList<imageModel>> imagesByDate; // danh sách ảnh trong All được nhóm theo date
     DateAdapter dateAdapter; // Pool chứa thông tin ngày và các ảnh có cùng key DATE_TAKEN
+    ArrayList<imageModel> imageListAll; // danh sách ảnh trong All không nhóm theo date
 
 
     // Tạo biến linkImage để chứa link của ảnh cần thêm vào.
@@ -92,9 +94,6 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<View> savedViewsAlbum = new ArrayList<>();
     ArrayList<View> savedViewsTrash = new ArrayList<>();
 
-    // danh sách ảnh chỉ được đọc từ thư viện ảnh vào lần đầu tiên mở ứng dụng
-    boolean isReadSdcardCalled = false;
-
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -105,28 +104,39 @@ public class MainActivity extends AppCompatActivity {
         //imageList = new ArrayList<>();
         imageListTrash = new ArrayList<>();
         listLinkAlbum= new ArrayList<>();
-        dates = new ArrayList<>();
-        imagesByDate = new HashMap<>();
         listNameAlbum= new ArrayList<>();
         listAlbum= new ArrayList<>();
+        dates = new ArrayList<>();
+        imagesByDate = new HashMap<>();
+        imageListAll = new ArrayList<>();
 
-
-        // Tạo Database
-        // 1. Tao database
-        try {
-            dbAlbum=this.openOrCreateDatabase("MyDatabase",MODE_PRIVATE,null);
+        // tạo database lưu tất cả ảnh trong ứng dụng
+        try
+        {
+            myDB=this.openOrCreateDatabase("MyDB",MODE_PRIVATE,null);
+        }
+        catch (SQLException e)
+        {
 
         }
-        catch (SQLException e){}
-        // Tạo bảng chứa danh sách các tên album;
 
+        // tạo table trong database lưu tất cả ảnh trong ứng dụng
+        CreateTable2();
+
+
+        // 1. Tạo database album
+        try {
+            dbAlbum=this.openOrCreateDatabase("MyDatabase",MODE_PRIVATE,null);
+        }
+        catch (SQLException e){}
+
+        // Tạo bảng chứa danh sách các tên album;
         CreateTable(dbAlbum,"listNameTable");
 
         // Insert giá trị Favorite vào, Favorite chính là album yêu thích.
         insertDataToTable(dbAlbum,"listNameTable","Favorite");
 
         // Lấy danh sách tên table từ bảng listNameTable
-
         getListFromTable(dbAlbum,listNameAlbum,"listNameTable");
 
         // Khởi tạo dữ liệu cho các Album, nếu Album chưa tồn tại thì tạo Table cho ALbum đó luôn
@@ -188,6 +198,9 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     containerList.add(insertIndex, imgModel);
+
+                    // trong database đổi type của ảnh là 0
+                    changeTypeInDB(imgModel.getId(), 0);
                 }
 
                 adapterTrash.notifyDataSetChanged();
@@ -233,8 +246,10 @@ public class MainActivity extends AppCompatActivity {
         Drawable activeDrawable = getResources().getDrawable(R.drawable.custom_button_active,null);
         activeButton.setBackground(activeDrawable);
 
-//        if(isReadSdcardCalled == false)
-//        {
+        // nếu dữ liệu trong database rỗng (trong lần mở ứng dụng đầu tiên)
+        if(isTableEmpty() == true)
+        {
+
             // Kiểm tra cho phép truy cập bộ nhớ ngoài bằng Dexter
             Dexter.withContext(this)
                     .withPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -242,7 +257,6 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onPermissionGranted(PermissionGrantedResponse permissionGrantedResponse) {
                             ReadSdcard(MainActivity.this);
-                            isReadSdcardCalled = true; // đánh dấu là đã đọc
                         }
 
                         @Override
@@ -255,7 +269,15 @@ public class MainActivity extends AppCompatActivity {
                             permissionToken.continuePermissionRequest();
                         }
                     }).check();
-//        }
+        }
+        // nếu database đã có dữ liệu (trong những lần mở ứng dụng tiếp theo)
+        else
+        {
+            // đọc danh sách ảnh trong ALl và danh sách ảnh trong Trash từ database
+            getListFromTable2(imageListAll, imageListTrash);
+            // chuyển danh sách ảnh trong All thành HashMap được nhóm theo date
+            convertToHashMap();
+        }
 
 
         btnAll.setOnClickListener(new View.OnClickListener() {
@@ -417,16 +439,43 @@ public class MainActivity extends AppCompatActivity {
 
                 Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,id);
 
-                if (!imagesByDate.containsKey(dateTaken)) {
-                    dates.add(dateTaken);
-                    imagesByDate.put(dateTaken, new ArrayList<imageModel>());
-                }
-                imagesByDate.get(dateTaken).add(new imageModel(i, dateTaken, contentUri));
+                // thêm ảnh vào danh sách ảnh trong ALl (chưa được nhóm theo date)
+                imageListAll.add(new imageModel(i, dateTaken, contentUri));
+                // thêm thông tin ảnh vào database
+                insertDataToTable2(i, dateTaken, contentUri.toString() );
                 i++;
             }
 
-            dateAdapter.notifyDataSetChanged();
+            // chuyển danh sách ảnh trong All thành HashMap được nhóm theo date
+            convertToHashMap();
         }
+    }
+
+    // chuyển danh sách ảnh trong All thành HashMap được nhóm theo date
+    public void convertToHashMap()
+    {
+        imagesByDate.clear();
+        String dateTaken;
+
+        // duyệt qua danh sách ảnh trong All
+        for (int i = 0; i < imageListAll.size(); i++)
+        {
+            // lấy dateTaken của ảnh
+            dateTaken = imageListAll.get(i).getDateTaken();
+
+            // nếu trong HashMap chưa có date này
+            if (!imagesByDate.containsKey(dateTaken))
+            {
+                // thêm date này vào và khởi tạo 1 ArrayList để lưu danh sách ảnh trong date này
+                dates.add(dateTaken);
+                imagesByDate.put(dateTaken, new ArrayList<imageModel>());
+            }
+
+            // thêm ảnh vào danh sách ảnh có đúng date tương ứng trong HashMap
+            imagesByDate.get(dateTaken).add(imageListAll.get(i));
+        }
+
+        dateAdapter.notifyDataSetChanged();
     }
 
     BroadcastReceiver receiver = new BroadcastReceiver()
@@ -441,16 +490,20 @@ public class MainActivity extends AppCompatActivity {
                 String imageDate = intent.getStringExtra("imageDate");
 
                 ArrayList<imageModel> containerList = imagesByDate.get(imageDate);
+
                 imageModel imgModel = containerList.remove(Integer.parseInt(imageIndex));
                 imageListTrash.add(0, imgModel);
 
-
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
+
                 /************* add by Quan *****************/
                 linkImage=intent.getStringExtra("imageLink");
                 deleteDataFromAllTable(dbAlbum,linkImage);
                 /*****************************************/
+
+                // trong database đổi type của ảnh là 1
+                changeTypeInDB(imgModel.getId(), 1);
             }
 
             // lắng nghe sự kiện bấm nút Restore: di chuyển ảnh đó từ Trash qua All
@@ -478,14 +531,20 @@ public class MainActivity extends AppCompatActivity {
 
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
+
+                // trong database đổi type của ảnh là 0
+                changeTypeInDB(imageID, 0);
             }
 
             // lắng nghe sự kiện xóa 1 ảnh khỏi thùng rác (xóa vĩnh viễn)
             if ("deleteTrash".equals(intent.getAction()))
             {
                 String imageIndexTrash = intent.getStringExtra("imageIndexTrash");
-                imageListTrash.remove(Integer.parseInt(imageIndexTrash));
+                imageModel imgModel = imageListTrash.remove(Integer.parseInt(imageIndexTrash));
                 adapterTrash.notifyDataSetChanged();
+
+                // xóa trong database
+                deleteDataInTable2(imgModel.getId());
             }
 
             if("addFavorite".equals(intent.getAction()))
@@ -654,7 +713,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v)
             {
+                // xóa trong database
+                for(int i=0;i<imageListTrash.size();i++)
+                {
+                    deleteDataInTable2(imageListTrash.get(i).getId());
+                }
+
+                // xóa trong mảng
                 imageListTrash.clear();
+
                 adapterTrash.notifyDataSetChanged();
                 dialog.dismiss();
             }
@@ -873,5 +940,129 @@ public class MainActivity extends AppCompatActivity {
     public void restoreDataIntoAllTable(SQLiteDatabase db)
     {
 
+    }
+
+    // tạo table trong database lưu tất cả ảnh trong ứng dụng (ALl và Trash lưu chung ở đây)
+    public void CreateTable2()
+    {
+        try {
+            String sqlQuery="CREATE TABLE IF NOT EXISTS listImage" + " ("
+                    + "id integer PRIMARY KEY, "
+                    + "dateTaken text, "
+                    + "link text, "
+                    + "type integer); "; // type = 0: ảnh trong ALl; type = 1: ảnh trong Trash
+            myDB.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+
+    // đọc danh sách ảnh trong All và danh sách ảnh trong Trash từ database
+    public void getListFromTable2(ArrayList<imageModel> listAll, ArrayList<imageModel> listTrash)
+    {
+        try
+        {
+            String sql = "select * from listImage";
+            Cursor c1 = myDB.rawQuery(sql, null);
+            c1.moveToPosition(-1);
+
+            listAll.clear();
+            listTrash.clear();
+
+            //duyệt qua từng dòng trong database
+            while(c1.moveToNext())
+            {
+                // lấy ra các thông tin của ảnh
+                int id = c1.getInt(0);
+                String dateTaken = c1.getString(1);
+                String linkImage = c1.getString(2);
+                int type = c1.getInt(3);
+
+                // tạo imageModel với các thông tin trên
+                imageModel imgModel = new imageModel(id, dateTaken, Uri.parse(linkImage));
+
+                // add imageModel vừa tạo vào mảng All hoặc Trash tùy vào type được lưu trong database
+                if(type==0)
+                {
+                    listAll.add(imgModel);
+                }
+                else
+                {
+                    listTrash.add(imgModel);
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+
+    // thêm 1 ảnh vào database
+    public void insertDataToTable2(int id, String dateTaken, String linkImage)
+    {
+        try
+        {
+            String sqlQuery="insert into listImage"
+                    + "(id, dateTaken, link, type) values ("
+                    + id + ",'" + dateTaken + "','" + linkImage + "', 0);";
+            myDB.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+
+    // xóa 1 ảnh khỏi database
+    public void deleteDataInTable2(int id)
+    {
+        try
+        {
+            String sqlQuery="DELETE FROM listImage WHERE id=" + id + ";";
+            myDB.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+
+    // thay đổi type của ảnh (khi di chuyển ảnh từ ALl qua Trash hoặc Trash qua All)
+    public void changeTypeInDB(int id, int newType)
+    {
+        try
+        {
+            String sqlQuery = "UPDATE listImage SET type = " + newType + " WHERE id = " + id;
+            myDB.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+
+    // kiểm tra dữ liệu trong database rỗng (trong lần mở ứng dụng đầu tiên)
+    public boolean isTableEmpty()
+    {
+        Cursor cursor = myDB.rawQuery("SELECT COUNT(*) FROM listImage", null);
+
+        boolean isEmpty = true;
+
+        if (cursor != null)
+        {
+            cursor.moveToFirst();
+            int count = cursor.getInt(0);
+            cursor.close();
+
+            if(count != 0)
+            {
+                isEmpty = false;
+            }
+        }
+
+        return isEmpty;
     }
 }

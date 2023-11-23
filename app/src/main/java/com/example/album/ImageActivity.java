@@ -232,10 +232,6 @@ public class ImageActivity extends AppCompatActivity {
                     }
                 }
             });
-
-            // Broadcast của click delete Album
-            IntentFilter filter = new IntentFilter("listAlbumSender");
-            registerReceiver(receiver, filter);
         }
 
         // khi là ảnh trong Trash
@@ -304,8 +300,20 @@ public class ImageActivity extends AppCompatActivity {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+
+        // Broadcast của click delete Album
+        IntentFilter filter = new IntentFilter("listAlbumSender");
+        registerReceiver(receiver, filter);
     }
 
+    @Override
+    protected void onDestroy()
+    {
+        super.onDestroy();
+
+        // hủy đăng ký broadcast receiver
+        unregisterReceiver(receiver);
+    }
 
     //Xử lý event chạm vào ảnh (Move)
     @Override
@@ -443,15 +451,6 @@ public class ImageActivity extends AppCompatActivity {
 
         // gọi lệnh Show để hiện Dialog
         dialog.show();
-    }
-
-    @Override
-    protected void onDestroy()
-    {
-        super.onDestroy();
-
-        // hủy đăng ký broadcast receiver
-        unregisterReceiver(receiver);
     }
 
      // Xử lý hiện dialog xác nhận chuyển vào Thùng rác
