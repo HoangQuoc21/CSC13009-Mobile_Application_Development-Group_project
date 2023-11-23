@@ -23,6 +23,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -121,7 +122,16 @@ public class MainActivity extends AppCompatActivity {
         // Tạo bảng chứa danh sách các tên album;
 
         CreateTable(dbAlbum,"listNameTable");
-
+//        try {
+//            String texttemp="DROP TABLE TrashAlbumImage ";
+//            dbAlbum.execSQL(texttemp);
+//        }
+//        catch (Exception e)
+//        {
+//
+//        }
+        createTableToStoreAlbumAndImage(dbAlbum);
+//        deleteAllDataInTableTrashAlbumImage(dbAlbum);
         // Insert giá trị Favorite vào, Favorite chính là album yêu thích.
         insertDataToTable(dbAlbum,"listNameTable","Favorite");
 
@@ -189,9 +199,9 @@ public class MainActivity extends AppCompatActivity {
 
                     containerList.add(insertIndex, imgModel);
                 }
-
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
+                restoreDataIntoAllTable(dbAlbum);
             }
         });
 
@@ -202,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v)
             {
                 openDialogDeleteAllTrash();
+                deleteAllDataInTableTrashAlbumImage(dbAlbum);
             }
         });
 
@@ -459,7 +470,7 @@ public class MainActivity extends AppCompatActivity {
             if ("restoreImage".equals(intent.getAction()))
             {
                 String imageIndexTrash = intent.getStringExtra("imageIndexTrash");
-
+//                String imageLink=intent.getStringExtra("imageLink");
                 imageModel imgModel = imageListTrash.remove(Integer.parseInt(imageIndexTrash));
                 int imageID = imgModel.getId();
                 String imageDate = imgModel.getDateTaken();
@@ -480,6 +491,12 @@ public class MainActivity extends AppCompatActivity {
 
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
+
+                /*
+                * Add by Quân*/
+//                restoreOneDataIntoALLTable(dbAlbum,imageLink);
+                /*
+                * Success*/
             }
 
             // lắng nghe sự kiện xóa 1 ảnh khỏi thùng rác (xóa vĩnh viễn)
@@ -862,8 +879,11 @@ public class MainActivity extends AppCompatActivity {
             while( c1.moveToNext() ){
                 int recId = c1.getInt(0);
                 String nameTable = c1.getString(1);
-
-                deleteDataInTable(db,nameTable,data);
+                if(isValueExists(db,nameTable,data))
+                {
+                    deleteDataInTable(db,nameTable,data);
+                    insertImageToDeleteAblbumTable(db,nameTable,data);
+                }
             }
         }
         catch (SQLException e)
@@ -876,6 +896,110 @@ public class MainActivity extends AppCompatActivity {
 
     public void restoreDataIntoAllTable(SQLiteDatabase db)
     {
+        try {
+
+            //3. truy van
+            String sql = "select * from TrashAlbumImage";
+            Cursor c1 = db.rawQuery(sql, null);
+            c1.moveToPosition(-1);
+            while( c1.moveToNext() ){
+
+                int recId = c1.getInt(0);
+                String nameTable = c1.getString(1);
+                String imageLink=c1.getString(2);
+                insertDataToTable(db,nameTable,imageLink);
+            }
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+
+    //
+    public void createTableToStoreAlbumAndImage(SQLiteDatabase db){
+
+        try {
+            String sqlQuery="CREATE TABLE IF NOT EXISTS TrashAlbumImage (" +
+                    "    recID INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "    nameAlbum TEXT," +
+                    "    nameImage TEXT" +
+                    "); ";
+            db.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+
+        }
 
     }
+
+    //
+    public void insertImageToDeleteAblbumTable(SQLiteDatabase db, String nameTable, String data) {
+        try {
+            String sqlQuery = "INSERT INTO TrashAlbumImage(nameAlbum, nameImage) VALUES  ('" + nameTable + "','" + data + "');";
+            db.execSQL(sqlQuery);
+
+//            Cursor cursor = db.rawQuery("SELECT * FROM TrashAlbumImage WHERE nameAlbum=?", new String[]{nameTable});
+//
+//            boolean result = cursor.getCount() > 0;
+//
+//            cursor.close();
+        } catch (SQLException e) {
+            Log.e("SQL_ERROR", "Có lỗi xảy ra", e);
+        }
+    }
+
+    //
+    public void deleteAllDataInTableTrashAlbumImage(SQLiteDatabase db)
+    {
+        try {
+            String sqlQuery="DELETE FROM TrashAlbumImage";
+            db.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+    //
+    public void deleteOneDataFromTrashAlbumImage(SQLiteDatabase db,String data)
+    {
+        try {
+            String sqlQuery="DELETE FROM TrashAlbumImage where nameImage= '"+data+"'; ";
+            db.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+    //
+    public void restoreOneDataIntoALLTable(SQLiteDatabase db, String data)
+    {
+        try {
+
+            //3. truy van
+            String sql = "select * from TrashAlbumImage where nameImage= ' "+data+" '; ";
+            Cursor c1 = db.rawQuery(sql, null);
+            c1.moveToPosition(-1);
+            while( c1.moveToNext() ){
+
+                int recId = c1.getInt(0);
+                String nameTable = c1.getString(1);
+                String imageLink=c1.getString(2);
+                insertDataToTable(db,nameTable,imageLink);
+            }
+            deleteOneDataFromTrashAlbumImage(db,data);
+        }
+        catch (SQLException e)
+        {
+
+        }
+    }
+//    @Override
+//    protected void onStop() {
+//        super.onStop();
+//        dbAlbum.close();
+//    }
 }

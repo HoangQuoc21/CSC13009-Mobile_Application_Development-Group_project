@@ -254,7 +254,7 @@ public class ImageActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     Intent intentRestore = new Intent("restoreImage");
                     intentRestore.putExtra("imageIndexTrash", imageIndex);
-
+//                    intentRestore.putExtra("imageLink",imagePath);
                     sendBroadcast(intentRestore);
                     finish();
                 }
