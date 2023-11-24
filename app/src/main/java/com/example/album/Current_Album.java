@@ -53,6 +53,7 @@ public class Current_Album extends AppCompatActivity {
         // Nhận intent
         Intent albumIntent= getIntent();
         name= albumIntent.getStringExtra("name");
+
         ArrayList<String> stringList = albumIntent.getStringArrayListExtra("listLink");
         for(int i=0;i<stringList.size();i++)
         {
@@ -86,6 +87,7 @@ public class Current_Album extends AppCompatActivity {
         adapterImageAlbum.notifyDataSetChanged();
         // Chỉnh ẩn nút delete của Ảnh khi mở ảnh trong album.
         ButtonStatusManager.getInstance().setButtonDisabled(true);
+        ButtonStatusManager.getInstance().setNameAlbum(name);
         // Xử lý sự kiện click Back.
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -106,11 +108,28 @@ public class Current_Album extends AppCompatActivity {
                 openDialogAddAlbum(Gravity.CENTER);
             }
         });
+        IntentFilter filter_deleteInAlbum = new IntentFilter("deleteInAlbum");
+        registerReceiver(receiver, filter_deleteInAlbum);
+
     }
-    @Override
-    protected void onStop() {
-        super.onStop();
+    BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if("deleteInAlbum".equals(intent.getAction()))
+            {
+                String linkImage=intent.getStringExtra("imageLink");
+                Uri imageLinkUri = Uri.parse(linkImage);
+                imageListCurentAlbum.removeIf(obj -> obj.getPath().equals(imageLinkUri));
+                adapterImageAlbum.notifyDataSetChanged();
+            }
+
+        }
+    };
+            @Override
+    protected void onDestroy() {
+        super.onDestroy();
         ButtonStatusManager.getInstance().setButtonDisabled(false);
+        ButtonStatusManager.getInstance().setNameAlbum("");
     }
 
     private void openDialogAddAlbum(int gravity)

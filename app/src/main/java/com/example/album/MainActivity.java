@@ -362,6 +362,8 @@ public class MainActivity extends AppCompatActivity {
         // Broadcast của Confirm insert Image to Album
         IntentFilter filter_insertImageToAlbum = new IntentFilter("addLinkImageToAlbumHadChoosen");
 
+        IntentFilter filter_deleteInAlbum = new IntentFilter("deleteInAlbum");
+
 
         registerReceiver(receiver, filter_moveToTrash);
         registerReceiver(receiver, filter_restore);
@@ -370,6 +372,8 @@ public class MainActivity extends AppCompatActivity {
         registerReceiver(receiver, filter_deleteAlbum);
         registerReceiver(receiver, filter_addImageAlbum);
         registerReceiver(receiver, filter_insertImageToAlbum);
+        registerReceiver(receiver, filter_deleteInAlbum);
+
     }
 
     @Override
@@ -561,6 +565,12 @@ public class MainActivity extends AppCompatActivity {
                 String linkImagetoAdd=intent.getStringExtra("imageLink");
                 insertDataToTable(dbAlbum,nameAlbumToAdd,linkImagetoAdd);
                 //albumAdapter.notifyDataSetChanged();
+            }
+            if("deleteInAlbum".equals(intent.getAction()))
+            {
+                String nameAlbum=intent.getStringExtra("nameAlbum");
+                String linkImage=intent.getStringExtra("imageLink");
+                deleteDataInTable(dbAlbum,nameAlbum,linkImage);
             }
         }
     };

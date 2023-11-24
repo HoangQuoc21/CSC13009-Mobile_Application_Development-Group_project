@@ -45,7 +45,7 @@ public class ImageActivity extends AppCompatActivity {
     Button btnBack;
 
     // Button ở footer của image bình thường
-    Button btnAddAlbum, btnAddFavorite, btnDelete, btnInfo;
+    Button btnAddAlbum, btnAddFavorite, btnDelete, btnInfo,btnDeleteInAlbum;
 
     // Button ở footer của image trong Trash
     Button btnDeleteTrash, btnRestore;
@@ -120,15 +120,17 @@ public class ImageActivity extends AppCompatActivity {
             btnAddFavorite = (Button) findViewById(R.id.btnAddFavorite);
             btnDelete = (Button) findViewById(R.id.btnDelete);
             btnInfo = (Button) findViewById(R.id.btnInfo);
-
+            btnDeleteInAlbum=(Button) findViewById(R.id.btnDeleteInAlbum);
 
             // Kiểm tra xem có ẩn hay hiện nút delete hay không?.
             if (ButtonStatusManager.getInstance().isButtonDisabled()) {
                 btnDelete.setVisibility(View.GONE);
+                btnDeleteInAlbum.setVisibility(View.VISIBLE);
             }
             else
             {
                 btnDelete.setVisibility(View.VISIBLE);
+                btnDeleteInAlbum.setVisibility(View.GONE);
             }
 
 
@@ -233,6 +235,17 @@ public class ImageActivity extends AppCompatActivity {
                 }
             });
 
+            btnDeleteInAlbum.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intentdeleteInAlbum= new Intent("deleteInAlbum");
+                    String nameAlbum= ButtonStatusManager.getInstance().getNameAlbum();
+                    intentdeleteInAlbum.putExtra("nameAlbum",nameAlbum);
+                    intentdeleteInAlbum.putExtra("imageLink",imagePath);
+                    sendBroadcast(intentdeleteInAlbum);
+                    Toast.makeText(ImageActivity.this, "Da Xoa", Toast.LENGTH_SHORT).show();
+                }
+            });
             // Broadcast của click delete Album
             IntentFilter filter = new IntentFilter("listAlbumSender");
             registerReceiver(receiver, filter);
