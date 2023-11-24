@@ -31,7 +31,7 @@ public class imageModel {
         this.path = path;
     }
 
-    public imageModel(Uri imageUri, String imagePath, Context context){
+    public imageModel(Uri path, String imagePath, Context context){
         this.context = context;
         //Tạo biến File giúp đọc file
         File file = new File(imagePath);
@@ -46,7 +46,7 @@ public class imageModel {
 
 
             //đọc uri ảnh
-            in = context.getContentResolver().openInputStream(imageUri);
+            in = context.getContentResolver().openInputStream(path);
 
             //tạo biến exifinterface để đọc các thông tin exif
             ExifInterface exif = new ExifInterface(in);

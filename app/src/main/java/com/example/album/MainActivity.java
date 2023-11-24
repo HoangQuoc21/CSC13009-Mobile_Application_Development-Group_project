@@ -226,7 +226,8 @@ public class MainActivity extends AppCompatActivity {
         // Tạo và gắn dateAdapter có chức năng tạo các pool ảnh có cùng DATE_TAKEN cho recyclerView chính
         dateAdapter = new DateAdapter(dates, imagesByDate, this);
         recyclerView.setAdapter(dateAdapter);
-        //=====================================================================================================
+
+        //====================================== QUOC WROTE THIS ==============================================
         //set du lieu cho spinner
         String[] arraySpinner = new String[] {
                 "Name", "Saved Place", "Date taken", "Length", "Width", "Camera make", "Camera model"
@@ -236,7 +237,7 @@ public class MainActivity extends AppCompatActivity {
                 android.R.layout.simple_spinner_item, arraySpinner);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         exifSpinner.setAdapter(spinnerAdapter);
-        //=====================================================================================================
+
         //anh xa filter
         exifSearchView = findViewById(R.id.exifSearchView);
         //=====================================================================================================
@@ -379,6 +380,22 @@ public class MainActivity extends AppCompatActivity {
         registerReceiver(receiver, filter_deleteAlbum);
         registerReceiver(receiver, filter_addImageAlbum);
         registerReceiver(receiver, filter_insertImageToAlbum);
+
+        //====================================== QUOC WROTE THIS ===================================
+        exifSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                dateAdapter.getFilter().filter(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                dateAdapter.getFilter().filter(newText);
+                return false;
+            }
+        });
+        //==========================================================================================
     }
 
     @Override
