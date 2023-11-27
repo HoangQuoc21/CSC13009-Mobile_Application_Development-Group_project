@@ -122,14 +122,8 @@ public class MainActivity extends AppCompatActivity {
         // Tạo bảng chứa danh sách các tên album;
 
         CreateTable(dbAlbum,"listNameTable");
-//        try {
-//            String texttemp="DROP TABLE TrashAlbumImage ";
-//            dbAlbum.execSQL(texttemp);
-//        }
-//        catch (Exception e)
-//        {
-//
-//        }
+
+        // Tạo bảnh chứa danh sách album và ảnh để restore từ trash
         createTableToStoreAlbumAndImage(dbAlbum);
 //        deleteAllDataInTableTrashAlbumImage(dbAlbum);
         // Insert giá trị Favorite vào, Favorite chính là album yêu thích.
@@ -212,7 +206,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v)
             {
                 openDialogDeleteAllTrash();
-                deleteAllDataInTableTrashAlbumImage(dbAlbum);
             }
         });
 
@@ -465,6 +458,7 @@ public class MainActivity extends AppCompatActivity {
                 dateAdapter.notifyDataSetChanged();
 
                 /************* add by Quan *****************/
+                /* Lấy link ảnh rồi sau đó xóa ảnh khỏi toàn bộ album*/
                 linkImage=intent.getStringExtra("imageLink");
                 deleteDataFromAllTable(dbAlbum,linkImage);
                 /*****************************************/
@@ -474,7 +468,6 @@ public class MainActivity extends AppCompatActivity {
             if ("restoreImage".equals(intent.getAction()))
             {
                 String imageIndexTrash = intent.getStringExtra("imageIndexTrash");
-//                String imageLink=intent.getStringExtra("imageLink");
                 imageModel imgModel = imageListTrash.remove(Integer.parseInt(imageIndexTrash));
                 int imageID = imgModel.getId();
                 String imageDate = imgModel.getDateTaken();
@@ -498,7 +491,9 @@ public class MainActivity extends AppCompatActivity {
 
                 /*
                 * Add by Quân*/
-//                restoreOneDataIntoALLTable(dbAlbum,imageLink);
+                /* Lấy link ảnh rồi restore ảnh vào toàn bộ album đã được thêm trước đó. */
+                String imageLink=intent.getStringExtra("imageLink");
+                restoreOneDataIntoALLTable(dbAlbum,imageLink);
                 /*
                 * Success*/
             }
@@ -509,8 +504,13 @@ public class MainActivity extends AppCompatActivity {
                 String imageIndexTrash = intent.getStringExtra("imageIndexTrash");
                 imageListTrash.remove(Integer.parseInt(imageIndexTrash));
                 adapterTrash.notifyDataSetChanged();
+                //Thêm bởi quân
+                String linkImage= intent.getStringExtra("linkImage");
+                deleteOneDataFromTrashAlbumImage(dbAlbum,linkImage);
+                //xong
             }
 
+            // lắng nghe sự kiện Thêm ảnh vào album Favorite (yêu thích)
             if("addFavorite".equals(intent.getAction()))
             {
                 // Lấy link
@@ -530,6 +530,8 @@ public class MainActivity extends AppCompatActivity {
                 //adapterTrash.notifyDataSetChanged();
                 //dateAdapter.notifyDataSetChanged();
             }
+
+            // lắng nghe sự kiện xóa album
 
             if("deleteAlbum".equals(intent.getAction()))
             {
@@ -551,6 +553,9 @@ public class MainActivity extends AppCompatActivity {
                 albumAdapter.notifyDataSetChanged();
             }
 
+            // lắng nghe sự kiện Thêm ảnh vào album, sự kiện này sẽ gửi danh sách album cho dialog add image to album
+            // sau đó dialog sẽ hiện thì danh sách album cho người dùng chọn.
+
             if("addImageToAlbum".equals(intent.getAction()))
             {
                 Intent intentListAlbum= new Intent("listAlbumSender");
@@ -559,6 +564,8 @@ public class MainActivity extends AppCompatActivity {
                 sendBroadcast(intentListAlbum);
             }
 
+            // lắng nghe sự kiện Thêm ảnh vào album, sự kiện này sẽ thêm ảnh vào album được chọn
+
             if("addLinkImageToAlbumHadChoosen".equals(intent.getAction()))
             {
                 String nameAlbumToAdd=intent.getStringExtra("albumName");
@@ -566,6 +573,8 @@ public class MainActivity extends AppCompatActivity {
                 insertDataToTable(dbAlbum,nameAlbumToAdd,linkImagetoAdd);
                 //albumAdapter.notifyDataSetChanged();
             }
+            // lắng nghe sự kiện xóa ảnh khỏi album, sự kiện này sẽ thêm ảnh vào album được chọn
+
             if("deleteInAlbum".equals(intent.getAction()))
             {
                 String nameAlbum=intent.getStringExtra("nameAlbum");
@@ -619,12 +628,14 @@ public class MainActivity extends AppCompatActivity {
                 String textName= edtDialogNameAlbum.getText().toString();
                 if(textName.equals(""))
                 {
+                    //Trường họp người dùng không nhập tên
                     Toast.makeText(MainActivity.this, "PLease Input Name", Toast.LENGTH_SHORT).show();
                 }
                 else
                 {
                     if(listNameAlbum.contains(textName))
                     {
+                        // trường hợp người dùng nhập tên trùng với tên album đã tồn tại
                         Toast.makeText(MainActivity.this, "Name Album was Exist", Toast.LENGTH_SHORT).show();
                     }
                     else
@@ -685,6 +696,10 @@ public class MainActivity extends AppCompatActivity {
             {
                 imageListTrash.clear();
                 adapterTrash.notifyDataSetChanged();
+                // Thêm bởi quân
+                // gọi hàm xóa toàn bộ thông tin trong TrashAlbumImage
+                deleteAllDataInTableTrashAlbumImage(dbAlbum);
+                // xong
                 dialog.dismiss();
             }
         });
@@ -781,7 +796,7 @@ public class MainActivity extends AppCompatActivity {
 
         currentLayout = layoutType;
     }
-    // Create Table, hàm dùng để tạo bảng trong database
+    // Create Table, hàm dùng để tạo bảng album và listAlbum trong database
 
     public void CreateTable(SQLiteDatabase db, String nameTable)
     {
@@ -877,7 +892,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //
+    // hàm dùng để xóa ảnh khỏi toàn bộ album
     public void deleteDataFromAllTable(SQLiteDatabase db, String data)
     {
         try {
@@ -902,7 +917,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //
+    // Hàm dùng để restore ảnh, ảnh sẽ được đưa trở lại toàn bộ album đã được thêm trước đó.
 
     public void restoreDataIntoAllTable(SQLiteDatabase db)
     {
@@ -926,7 +941,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //
+    //Hàm dùng để tạo table TrashAlbumImage,
+    // table này sẽ lưu tên album và ảnh đã bị xóa khỏi album đó khi người dùng xóa ảnh trong all
     public void createTableToStoreAlbumAndImage(SQLiteDatabase db){
 
         try {
@@ -944,7 +960,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    //
+    //Hàm dùng để đưa giá trị album và image vào trong table TrashAlbumImage
     public void insertImageToDeleteAblbumTable(SQLiteDatabase db, String nameTable, String data) {
         try {
             String sqlQuery = "INSERT INTO TrashAlbumImage(nameAlbum, nameImage) VALUES  ('" + nameTable + "','" + data + "');";
@@ -960,7 +976,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //
+    //Hàm dùng để xóa toàn bộ dữ liệu trong table TrashAlbumImage
     public void deleteAllDataInTableTrashAlbumImage(SQLiteDatabase db)
     {
         try {
@@ -972,7 +988,7 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
-    //
+    //hàm dùng để xóa toàn bộ thông tin của ảnh cụ thể (tên album và tên ảnh) khỏi TrashAlbumImage
     public void deleteOneDataFromTrashAlbumImage(SQLiteDatabase db,String data)
     {
         try {
@@ -984,13 +1000,13 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
-    //
+    //Hàm dùng để đưa ảnh trở về các album khi nhấn nút restore khi mở ảnh trong trash
     public void restoreOneDataIntoALLTable(SQLiteDatabase db, String data)
     {
         try {
 
             //3. truy van
-            String sql = "select * from TrashAlbumImage where nameImage= ' "+data+" '; ";
+            String sql = "select * from TrashAlbumImage where nameImage= '"+data+"'; ";
             Cursor c1 = db.rawQuery(sql, null);
             c1.moveToPosition(-1);
             while( c1.moveToNext() ){
@@ -1000,6 +1016,7 @@ public class MainActivity extends AppCompatActivity {
                 String imageLink=c1.getString(2);
                 insertDataToTable(db,nameTable,imageLink);
             }
+            // Sau khi đã restore ảnh vào toàn bộ album trước đó thì xóa thông tin về album và ảnh khỏi table restore
             deleteOneDataFromTrashAlbumImage(db,data);
         }
         catch (SQLException e)

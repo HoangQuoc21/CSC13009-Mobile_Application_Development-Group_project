@@ -112,6 +112,8 @@ public class Current_Album extends AppCompatActivity {
         registerReceiver(receiver, filter_deleteInAlbum);
 
     }
+
+    // add by Quân, receiver dùng để nhận dữ liều từ ImageActivity sau đó xóa ảnh khỏi album đang chọn
     BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -125,13 +127,16 @@ public class Current_Album extends AppCompatActivity {
 
         }
     };
+
+    // Đưa giá trị set up của button DeleteInAlbum trong ImageActivity về mặc định để khi không mở trong album
+    // thì sẽ không hiện nút Delete In Album
             @Override
     protected void onDestroy() {
         super.onDestroy();
         ButtonStatusManager.getInstance().setButtonDisabled(false);
         ButtonStatusManager.getInstance().setNameAlbum("");
     }
-
+    // Set up dialog yêu cầu Xóa album
     private void openDialogAddAlbum(int gravity)
     {
         final Dialog dialog= new Dialog(this);
@@ -168,6 +173,8 @@ public class Current_Album extends AppCompatActivity {
                 dialog.dismiss();
             }
         });
+
+        // Xóa Album
         btnCurrentAlbumDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

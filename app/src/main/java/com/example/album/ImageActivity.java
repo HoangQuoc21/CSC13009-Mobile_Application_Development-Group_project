@@ -234,7 +234,8 @@ public class ImageActivity extends AppCompatActivity {
                     }
                 }
             });
-
+            // Nút yêu cầu xóa ảnh trong album
+            // Thêm bởi Quân
             btnDeleteInAlbum.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -243,12 +244,10 @@ public class ImageActivity extends AppCompatActivity {
                     intentdeleteInAlbum.putExtra("nameAlbum",nameAlbum);
                     intentdeleteInAlbum.putExtra("imageLink",imagePath);
                     sendBroadcast(intentdeleteInAlbum);
-                    Toast.makeText(ImageActivity.this, "Da Xoa", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ImageActivity.this, "Delete image in this album was successful", Toast.LENGTH_SHORT).show();
                 }
             });
-            // Broadcast của click delete Album
-            IntentFilter filter = new IntentFilter("listAlbumSender");
-            registerReceiver(receiver, filter);
+
         }
 
         // khi là ảnh trong Trash
@@ -267,7 +266,9 @@ public class ImageActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     Intent intentRestore = new Intent("restoreImage");
                     intentRestore.putExtra("imageIndexTrash", imageIndex);
-//                    intentRestore.putExtra("imageLink",imagePath);
+                    // add by Quan
+                    intentRestore.putExtra("imageLink",imagePath);
+                    // xong
                     sendBroadcast(intentRestore);
                     finish();
                 }
@@ -317,6 +318,9 @@ public class ImageActivity extends AppCompatActivity {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+        // Broadcast của click delete Album
+        IntentFilter filter = new IntentFilter("listAlbumSender");
+        registerReceiver(receiver, filter);
     }
 
 
@@ -506,7 +510,7 @@ public class ImageActivity extends AppCompatActivity {
                 Intent intentDelete = new Intent("deleteImage");
                 intentDelete.putExtra("imageIndex", imageIndex);
                 intentDelete.putExtra("imageDate", imageDate);
-                // add by Quan
+                // add by Quan, xác định link ảnh cần xóa
                 intentDelete.putExtra("imageLink",imagePath);
                 //
                 sendBroadcast(intentDelete);
@@ -557,7 +561,9 @@ public class ImageActivity extends AppCompatActivity {
             {
                 Intent intentDeleteTrash = new Intent("deleteTrash");
                 intentDeleteTrash.putExtra("imageIndexTrash", imageIndex);
-
+                // THêm bởi quân, xác định link ảnh cần xóa vĩnh viễn khỏi trash
+                intentDeleteTrash.putExtra("linkImage", imagePath);
+                // xong
                 sendBroadcast(intentDeleteTrash);
                 finish();
             }
