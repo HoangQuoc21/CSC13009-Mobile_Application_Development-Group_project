@@ -53,6 +53,7 @@ public class Current_Album extends AppCompatActivity {
         // Nhận intent
         Intent albumIntent= getIntent();
         name= albumIntent.getStringExtra("name");
+
         ArrayList<String> stringList = albumIntent.getStringArrayListExtra("listLink");
         for(int i=0;i<stringList.size();i++)
         {
@@ -86,6 +87,7 @@ public class Current_Album extends AppCompatActivity {
         adapterImageAlbum.notifyDataSetChanged();
         // Chỉnh ẩn nút delete của Ảnh khi mở ảnh trong album.
         ButtonStatusManager.getInstance().setButtonDisabled(true);
+        ButtonStatusManager.getInstance().setNameAlbum(name);
         // Xử lý sự kiện click Back.
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -106,13 +108,35 @@ public class Current_Album extends AppCompatActivity {
                 openDialogAddAlbum(Gravity.CENTER);
             }
         });
-    }
-    @Override
-    protected void onStop() {
-        super.onStop();
-        ButtonStatusManager.getInstance().setButtonDisabled(false);
+        IntentFilter filter_deleteInAlbum = new IntentFilter("deleteInAlbum");
+        registerReceiver(receiver, filter_deleteInAlbum);
+
     }
 
+    // add by Quân, receiver dùng để nhận dữ liều từ ImageActivity sau đó xóa ảnh khỏi album đang chọn
+    BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if("deleteInAlbum".equals(intent.getAction()))
+            {
+                String linkImage=intent.getStringExtra("imageLink");
+                Uri imageLinkUri = Uri.parse(linkImage);
+                imageListCurentAlbum.removeIf(obj -> obj.getPath().equals(imageLinkUri));
+                adapterImageAlbum.notifyDataSetChanged();
+            }
+
+        }
+    };
+
+    // Đưa giá trị set up của button DeleteInAlbum trong ImageActivity về mặc định để khi không mở trong album
+    // thì sẽ không hiện nút Delete In Album
+            @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        ButtonStatusManager.getInstance().setButtonDisabled(false);
+        ButtonStatusManager.getInstance().setNameAlbum("");
+    }
+    // Set up dialog yêu cầu Xóa album
     private void openDialogAddAlbum(int gravity)
     {
         final Dialog dialog= new Dialog(this);
@@ -149,6 +173,8 @@ public class Current_Album extends AppCompatActivity {
                 dialog.dismiss();
             }
         });
+
+        // Xóa Album
         btnCurrentAlbumDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
