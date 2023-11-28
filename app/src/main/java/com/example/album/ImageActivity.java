@@ -45,7 +45,7 @@ public class ImageActivity extends AppCompatActivity {
     Button btnBack;
 
     // Button ở footer của image bình thường
-    Button btnAddAlbum, btnAddFavorite, btnDelete, btnInfo;
+    Button btnAddAlbum, btnAddFavorite, btnDelete, btnInfo,btnDeleteInAlbum;
 
     // Button ở footer của image trong Trash
     Button btnDeleteTrash, btnRestore;
@@ -120,15 +120,17 @@ public class ImageActivity extends AppCompatActivity {
             btnAddFavorite = (Button) findViewById(R.id.btnAddFavorite);
             btnDelete = (Button) findViewById(R.id.btnDelete);
             btnInfo = (Button) findViewById(R.id.btnInfo);
-
+            btnDeleteInAlbum=(Button) findViewById(R.id.btnDeleteInAlbum);
 
             // Kiểm tra xem có ẩn hay hiện nút delete hay không?.
             if (ButtonStatusManager.getInstance().isButtonDisabled()) {
                 btnDelete.setVisibility(View.GONE);
+                btnDeleteInAlbum.setVisibility(View.VISIBLE);
             }
             else
             {
                 btnDelete.setVisibility(View.VISIBLE);
+                btnDeleteInAlbum.setVisibility(View.GONE);
             }
 
 
@@ -232,10 +234,20 @@ public class ImageActivity extends AppCompatActivity {
                     }
                 }
             });
+            // Nút yêu cầu xóa ảnh trong album
+            // Thêm bởi Quân
+            btnDeleteInAlbum.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intentdeleteInAlbum= new Intent("deleteInAlbum");
+                    String nameAlbum= ButtonStatusManager.getInstance().getNameAlbum();
+                    intentdeleteInAlbum.putExtra("nameAlbum",nameAlbum);
+                    intentdeleteInAlbum.putExtra("imageLink",imagePath);
+                    sendBroadcast(intentdeleteInAlbum);
+                    Toast.makeText(ImageActivity.this, "Delete image in this album was successful", Toast.LENGTH_SHORT).show();
+                }
+            });
 
-            // Broadcast của click delete Album
-            IntentFilter filter = new IntentFilter("listAlbumSender");
-            registerReceiver(receiver, filter);
         }
 
         // khi là ảnh trong Trash
@@ -254,7 +266,9 @@ public class ImageActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     Intent intentRestore = new Intent("restoreImage");
                     intentRestore.putExtra("imageIndexTrash", imageIndex);
-
+                    // add by Quan
+                    intentRestore.putExtra("imageLink",imagePath);
+                    // xong
                     sendBroadcast(intentRestore);
                     finish();
                 }
@@ -304,6 +318,9 @@ public class ImageActivity extends AppCompatActivity {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+        // Broadcast của click delete Album
+        IntentFilter filter = new IntentFilter("listAlbumSender");
+        registerReceiver(receiver, filter);
     }
 
 
@@ -493,7 +510,7 @@ public class ImageActivity extends AppCompatActivity {
                 Intent intentDelete = new Intent("deleteImage");
                 intentDelete.putExtra("imageIndex", imageIndex);
                 intentDelete.putExtra("imageDate", imageDate);
-                // add by Quan
+                // add by Quan, xác định link ảnh cần xóa
                 intentDelete.putExtra("imageLink",imagePath);
                 //
                 sendBroadcast(intentDelete);
@@ -544,7 +561,9 @@ public class ImageActivity extends AppCompatActivity {
             {
                 Intent intentDeleteTrash = new Intent("deleteTrash");
                 intentDeleteTrash.putExtra("imageIndexTrash", imageIndex);
-
+                // THêm bởi quân, xác định link ảnh cần xóa vĩnh viễn khỏi trash
+                intentDeleteTrash.putExtra("linkImage", imagePath);
+                // xong
                 sendBroadcast(intentDeleteTrash);
                 finish();
             }

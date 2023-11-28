@@ -4,7 +4,7 @@ package com.example.album;
 public class ButtonStatusManager {
     private static ButtonStatusManager instance;
     private boolean isButtonDisabled = false;
-
+    private String nameAlbum="";
     private ButtonStatusManager() {
         // Khởi tạo các giá trị mặc định
     }
@@ -22,5 +22,14 @@ public class ButtonStatusManager {
 
     public void setButtonDisabled(boolean disabled) {
         isButtonDisabled = disabled;
+    }
+
+    public void setNameAlbum(String name)
+    {
+        this.nameAlbum=name;
+    }
+    public String getNameAlbum()
+    {
+        return this.nameAlbum;
     }
 }
