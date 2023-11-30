@@ -1,9 +1,13 @@
 package com.example.album;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 
 import android.app.Dialog;
+import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -31,6 +35,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.yalantis.ucrop.UCrop;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -49,6 +55,8 @@ public class ImageActivity extends AppCompatActivity {
 
     // Button ở footer của image trong Trash
     Button btnDeleteTrash, btnRestore;
+    // Edit button
+    Button btnEdit;
 
     //Khai báo ImageView
     ImageView imageView;
@@ -103,7 +111,6 @@ public class ImageActivity extends AppCompatActivity {
         // dùng để dán layout footer đúng với với ảnh bình thường hoặc ảnh trong Trash
         String footerLayout = myBundle.getString("footer");
 
-
         // khi là ảnh bình thường
         if(footerLayout.equals("1"))
         {
@@ -119,6 +126,7 @@ public class ImageActivity extends AppCompatActivity {
             btnAddAlbum = (Button) findViewById(R.id.btnAddAlbum);
             btnAddFavorite = (Button) findViewById(R.id.btnAddFavorite);
             btnDelete = (Button) findViewById(R.id.btnDelete);
+            btnEdit = (Button) findViewById(R.id.btnEdit);
             btnInfo = (Button) findViewById(R.id.btnInfo);
             btnDeleteInAlbum=(Button) findViewById(R.id.btnDeleteInAlbum);
 
@@ -165,6 +173,21 @@ public class ImageActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     openDialogDelete(imageDate,imageIndex,imagePath);
+                }
+            });
+
+            // Xử lý nút edit
+            btnEdit.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //Toast.makeText(ImageActivity.this, "Edit", Toast.LENGTH_SHORT).show();
+                    //imageEdit.launch("image/" + imagePath);
+
+                    // Tạo intent, truyền imagePath và start activity image cropper với mong muốn
+                    // nhận được kết quả là một imagePath của ảnh sau khi thực hiện chỉnh sửa
+                    Intent editIntent = new Intent(ImageActivity.this, ImageCropper.class);
+                    editIntent.putExtra("SendImageData", imagePath);
+                    startActivityForResult(editIntent, 100);
                 }
             });
 
@@ -571,5 +594,44 @@ public class ImageActivity extends AppCompatActivity {
 
         // gọi lệnh Show để hiện Dialog
         dialog.show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Ảnh sau khi cắt xong sẽ trả về result code == 101
+        // Ứng với request code == 100 khi start editIntent (btnEdit.onClick)
+        if (requestCode == 100 && resultCode == 101) {
+
+            // Lấy kết quả trả về và parse nó sang Uri để ghi
+            // vào imageView, thay cho image cũ
+            String result = data.getStringExtra("Crop");
+            Uri resultUri = data.getData();
+            if (result != null) {
+                resultUri = Uri.parse(result);
+            }
+            try {
+                Bitmap bmEditedImage = BitmapFactory.decodeStream(
+                        getContentResolver().openInputStream(resultUri));
+                if (bmEditedImage != null) {
+
+                    // Đặt ảnh vào ImageView
+                    imageView.setImageBitmap(bmEditedImage);
+
+                    //Xử lý scale ảnh (Zoom in, Zoom out);
+                    //scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
+                    Toast.makeText(this, "Load ảnh sau khi crop nè :>", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    //thông báo để kiểm tra
+                    Toast.makeText(this, "Khum load được kết quả crop :<", Toast.LENGTH_SHORT).show();
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }else {
+            Toast.makeText(this, "Trở về, hong cắt nữa ~~", Toast.LENGTH_SHORT).show();
+        }
     }
 }
