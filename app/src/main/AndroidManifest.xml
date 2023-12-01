@@ -20,9 +20,6 @@
             android:name=".Current_Album"
             android:exported="false" />
         <activity
-            android:name=".FullScreenActivity"
-            android:exported="false" />
-        <activity
             android:name=".ImageActivity"
             android:exported="false" />
         <activity

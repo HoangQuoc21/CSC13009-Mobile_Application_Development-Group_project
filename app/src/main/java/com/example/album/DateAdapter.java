@@ -7,81 +7,42 @@ import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.TextView;
 
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.album.ImageAdapter;
-import com.example.album.R;
-import com.example.album.imageModel;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 
-public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> implements Filterable {
+//[QUOC]: implements thêm interface Filterable để lọc thông tin exif; SortingDatesInterface để sắp xếp ảnh theo thứ tự ngày giảm dần
+public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> implements Filterable, SortingDatesInterface {
     private Context context;
     private ArrayList<String> dates;
     private HashMap<String, ArrayList<imageModel>> imagesByDate;
+    //========================================= QUOC ADDED THIS =====================================
+    //Thêm biến này giữ giá trị là hashmap khởi tạo ban đầu (khi bật app) để phục vụ cho việc filter
     private HashMap<String, ArrayList<imageModel>> imagesByDateOld;
+    //===============================================================================================
 
     public DateAdapter(ArrayList<String> dates, HashMap<String, ArrayList<imageModel>> imagesByDate, Context context) {
         this.dates = dates;
         this.imagesByDate = imagesByDate;
-        //sortImagesByDateDescending();
-        this.imagesByDateOld = imagesByDate;
+
+        //========================================= QUOC ADDED THIS =====================================
+        this.imagesByDateOld = imagesByDate; //giữ giá trị hashmap khởi tạo ban đầu
+        //===============================================================================================
         this.context = context;
-    }
-
-    // Function to sort imagesByDates by dateTaken in descending order
-    public void sortImagesByDateDescending() {
-        // Ensure imagesByDates is not null
-        if (imagesByDate == null) {
-            return;
-        }
-
-        // Create a comparator for sorting dates in descending order
-        Comparator<String> dateComparator = (date1, date2) -> {
-            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
-
-            try {
-                Date parsedDate1 = sdf.parse(date1);
-                Date parsedDate2 = sdf.parse(date2);
-
-                // Sort in descending order
-                if (parsedDate1 != null && parsedDate2 != null) {
-                    return parsedDate2.compareTo(parsedDate1);
-                }
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-
-            return 0;
-        };
-
-        // Convert the keys of imagesByDates to a list for sorting
-        List<String> dateList = new ArrayList<>(imagesByDate.keySet());
-
-        // Sort the dateList based on the dateComparator
-        Collections.sort(dateList, dateComparator);
-
-        // Create a new HashMap for sorted images
-        HashMap<String, ArrayList<imageModel>> sortedImagesByDates = new HashMap<>();
-
-        // Populate the new HashMap with sorted entries
-        for (String date : dateList) {
-            sortedImagesByDates.put(date, imagesByDate.get(date));
-        }
-
-        // Update imagesByDates with the sorted data
-        imagesByDate = sortedImagesByDates;
-        imagesByDateOld = sortedImagesByDates;
     }
 
     @NonNull
@@ -102,49 +63,6 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> im
         holder.imageRecyclerView.setAdapter(new ImageAdapter("1", images, this.context));
     }
 
-    @Override
-    public int getItemCount() {
-        return dates.size();
-    }
-
-    //====================================== QUOC WROTE THIS =======================================
-    @Override
-    public Filter getFilter() {
-        return new Filter() {
-            @Override
-            protected FilterResults performFiltering(CharSequence constraint) {
-                String strSearch = constraint.toString();
-
-                HashMap<String, ArrayList<imageModel>> filterList = new HashMap<>();
-
-                if(strSearch.isEmpty())
-                    filterList = imagesByDateOld;
-                else{
-                    if(imagesByDateOld.containsKey(strSearch)){
-                        filterList.put(strSearch,imagesByDateOld.get(strSearch));
-                    }
-                }
-
-                imagesByDate = filterList;
-
-                FilterResults filterResults = new FilterResults();
-                filterResults.values = imagesByDate;
-
-                return filterResults;
-            }
-
-            @Override
-            protected void publishResults(CharSequence constraint, FilterResults results) {
-                imagesByDate = (HashMap<String, ArrayList<imageModel>>)results.values;
-
-                dates = new ArrayList<>(imagesByDate.keySet());
-
-                notifyDataSetChanged();
-            }
-        };
-    }
-    //==============================================================================================
-
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public TextView dateTextView;
         public RecyclerView imageRecyclerView;
@@ -155,4 +73,91 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> im
             imageRecyclerView = itemView.findViewById(R.id.imageRecyclerView);
         }
     }
+
+    @Override
+    public int getItemCount() {
+        return dates.size();
+    }
+
+    //====================================== QUOC WROTE THIS =======================================
+    //Phương thức getFilter() để lọc hình theo chuỗi yêu cầu truyền từ MainActivity vào
+    @Override
+    public Filter getFilter() {
+        return new Filter() {
+            //Phương thức xử lý việc filter
+            @Override
+            protected FilterResults performFiltering(CharSequence constraint) {
+                //Lấy chuỗi tìm kiếm yêu cầu (từ MainActivity)
+                String strSearch = constraint.toString();
+
+                //Tạo hashmap tạm thời dùng cho việc lọc
+                HashMap<String, ArrayList<imageModel>> filterList = new HashMap<>();
+
+                //Nếu chuỗi tìm kiếm rỗng thì gán hashmap lọc bằng hashmap khởi tạo
+                if(strSearch.isEmpty() )
+                    filterList = imagesByDateOld;
+                else{
+                    //Nếu chuỗi tìm kiếm không rỗng
+
+                    //Tách chuỗi tìm kiếm lấy : loại thông tin và thông tin tìm kiếm
+                    ArrayList<String> tokens = new ArrayList<String>(Arrays.asList(strSearch.split("/")));
+
+                    //lọc dựa trên loại thông tin:
+
+                    //1. Nếu loại thông tin là dateTaken thì chỉ kiểm tra có tồn tại ngày muốn lọc trong bộ key của hashmap không thôi
+                    if(tokens.get(0).equals("Date taken")){
+                        for (Map.Entry<String, ArrayList<imageModel>> entry : imagesByDateOld.entrySet()) {
+                            if(entry.getKey().contains(tokens.get(1)))
+                                filterList.put(entry.getKey(),entry.getValue());
+                        }
+                    }
+                    //2. Nếu loại thooing tin là "Camera make" thì cần lọc lồng qua các ảnh của từng key trong hashmap
+                    else if (tokens.get(0).equals("Camera make")){
+                        for (Map.Entry<String, ArrayList<imageModel>> entry : imagesByDateOld.entrySet()) {
+                            for (imageModel img:entry.getValue()){
+                                //Nếu tìm thấy ảnh có thông tin cần tìm
+                                if((img.cameraMake != null) && img.cameraMake.toLowerCase().contains(tokens.get(1).toLowerCase())){
+                                    //Kiểm tra xem trong hashmap lọc đã tồn tại dateTaken của ảnh khớp thông tin chưa
+                                    if(!filterList.containsKey(entry.getKey())){
+                                        //nếu chưa thì thêm dateTaken vào hashmap lọc
+                                        filterList.put(entry.getKey(),new ArrayList<imageModel>());
+                                    }
+                                    //Đưa ảnh khớp vào hashmap
+                                    filterList.get(entry.getKey()).add(img);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //gán giá trị hashmap set cho adapter là hashmap lọc được
+                imagesByDate = filterList;
+
+                //Trả về kết quả lọc
+                FilterResults filterResults = new FilterResults();
+                filterResults.values = imagesByDate;
+
+                return filterResults;
+            }
+
+            //Phương thức publishResults() để hiển thị kết quả lọc từ phương thức getFilter() ở trên
+            @Override
+            protected void publishResults(CharSequence constraint, FilterResults results) {
+                //gán giá trị hashmap set cho adapter là kết quả lọc được (kết quả trả về của hàm getFilter())
+                imagesByDate = (HashMap<String, ArrayList<imageModel>>)results.values;
+
+                //gán giá trị date set cho adapter là bộ key của hashmap
+                dates = new ArrayList<>(imagesByDate.keySet());
+
+                //sắp xếp lại hashmap theo thứ tự giảm dần của key (key là dateTaken)
+                SortingDatesInterface.sortHashMapByKeyDescending(imagesByDate);
+                //sắp xếp lại date theo thứ tự giảm dần
+                SortingDatesInterface.sortDatesDescending(dates);
+
+                //Gọi phương thức này để adapter hiện thay đổi theo hashmap và date vừa thay đổi ở trên
+                notifyDataSetChanged();
+            }
+        };
+    }
+    //==============================================================================================
 }

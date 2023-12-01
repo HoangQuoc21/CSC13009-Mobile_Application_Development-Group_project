@@ -51,7 +51,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
-public class MainActivity extends AppCompatActivity {
+//Quoc implement SortingDatesInterface de sap xep thoi gian cac anh giam dan theo ngay
+public class MainActivity extends AppCompatActivity implements SortingDatesInterface {
     RecyclerView recyclerView;
     ArrayList<String> dates; // thông tin ngày cho từng list ảnh có cùng DATE_TAKEN
     // Hashmap có key là DATE_TAKEN, value là list các model ảnh có cùng DATE_TAKEN đó
@@ -131,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Tạo bảnh chứa danh sách album và ảnh để restore từ trash
         createTableToStoreAlbumAndImage(dbAlbum);
-//        deleteAllDataInTableTrashAlbumImage(dbAlbum);
+        // deleteAllDataInTableTrashAlbumImage(dbAlbum);
         // Insert giá trị Favorite vào, Favorite chính là album yêu thích.
         insertDataToTable(dbAlbum,"listNameTable","Favorite");
 
@@ -145,8 +146,6 @@ public class MainActivity extends AppCompatActivity {
         {
             CreateTable(dbAlbum,listNameAlbum.get(index));
         }
-
-
 
         // khung để đặt 3 layout tương ứng với 3 tab
         frame = findViewById(R.id.frame);
@@ -215,10 +214,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
         // load layout album lên để kết nối với các widget, adapter,... trong đó
-
-
 
         // load layout all lên để kết nối với các widget, adapter,... trong đó
         loadLayout(R.layout.main_all, 1);
@@ -227,22 +223,27 @@ public class MainActivity extends AppCompatActivity {
         // Cài đặt view layout cho recycler chính chứa các pool ảnh theo dạng trượt dọc (VERTICAL)
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
+
         // Tạo và gắn dateAdapter có chức năng tạo các pool ảnh có cùng DATE_TAKEN cho recyclerView chính
         dateAdapter = new DateAdapter(dates, imagesByDate, this);
         recyclerView.setAdapter(dateAdapter);
 
         //====================================== QUOC WROTE THIS ==============================================
-        //set du lieu cho spinner
+        //Set dữ liệu cho spinner là loại thông tin exif tìm kiếm
         String[] arraySpinner = new String[] {
-                "Name", "Saved Place", "Date taken", "Length", "Width", "Camera make", "Camera model"
+                "Date taken", "Camera make"
         };
+
+        //Ánh xạ exif
         exifSpinner = (Spinner) findViewById(R.id.exifSpinner);
+
+        //set adapter cho spinner
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, arraySpinner);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         exifSpinner.setAdapter(spinnerAdapter);
 
-        //anh xa filter
+        //Ánh xạ searchView
         exifSearchView = findViewById(R.id.exifSearchView);
         //=====================================================================================================
         nAll = 1;
@@ -388,16 +389,39 @@ public class MainActivity extends AppCompatActivity {
         registerReceiver(receiver, filter_insertImageToAlbum);
 
         //====================================== QUOC WROTE THIS ===================================
+        //Phương thức này dùng để xử lý khi nhập chuỗi tìm kiếm trong searchView
         exifSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            //Xử lý khi nhập nguyên chuỗi tìm kiếm rồi bấm enter
             @Override
             public boolean onQueryTextSubmit(String query) {
-                dateAdapter.getFilter().filter(query);
+                String searchStr;
+
+                //Nếu chuỗi tìm kiếm rỗng
+                if(query.isEmpty())
+                    searchStr = query;
+                else
+                    //Nếu chuỗi tìm kiếm không rỗng, thì sửa lại chuỗi cho có định dạng: "loại thông tin/thông tin tìm kiếm"
+                    searchStr = exifSpinner.getSelectedItem() + "/"  + query;
+
+                //đưa chuỗi tìm kiếm vào dateAdapter để nó filter rồi hiện kết quả lên all
+                dateAdapter.getFilter().filter(searchStr);
                 return false;
             }
 
+            //Xử lý khi khi có bất cứ thay đổi gì trong chuỗi tìm kiếm (ko cần bấm enter)
             @Override
             public boolean onQueryTextChange(String newText) {
-                dateAdapter.getFilter().filter(newText);
+                String searchStr;
+
+                //Nếu chuỗi tìm kiếm rỗng
+                if(newText.isEmpty())
+                    searchStr = newText;
+                else
+                    //Nếu chuỗi tìm kiếm không rỗng, thì sửa lại chuỗi cho có định dạng: "loại thông tin/thông tin tìm kiếm"
+                    searchStr = exifSpinner.getSelectedItem() + "/"  + newText;
+
+                //đưa chuỗi tìm kiếm vào dateAdapter để nó filter rồi hiện kết quả lên all
+                dateAdapter.getFilter().filter(searchStr);
                 return false;
             }
         });
@@ -466,9 +490,19 @@ public class MainActivity extends AppCompatActivity {
                     dates.add(dateTaken);
                     imagesByDate.put(dateTaken, new ArrayList<imageModel>());
                 }
-                imagesByDate.get(dateTaken).add(new imageModel(i, dateTaken, contentUri));
+                imageModel addingImage = new imageModel(i, dateTaken, contentUri);
+                addingImage.setExif(contentUri,linkImage,context);
+                imagesByDate.get(dateTaken).add(addingImage);
                 i++;
             }
+
+            //======================= QUOC ADDED THIS =====================================
+            //Gọi hàm từ interface SortingDatesInterface để sắp xếp ngày giảm dần
+            //sắp xếp lại hashmap theo thứ tự giảm dần của key (key là dateTaken)
+            SortingDatesInterface.sortDatesDescending(dates);
+            //sắp xếp lại date theo thứ tự giảm dần
+            SortingDatesInterface.sortHashMapByKeyDescending(imagesByDate);
+            //=============================================================================
 
             dateAdapter.notifyDataSetChanged();
         }
@@ -954,7 +988,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Hàm dùng để restore ảnh, ảnh sẽ được đưa trở lại toàn bộ album đã được thêm trước đó.
-
     public void restoreDataIntoAllTable(SQLiteDatabase db)
     {
         try {
@@ -997,7 +1030,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //================= Add by Quoc ====================
-    //phuong thuc onBackPressed de xu ly khi khong su dung filter nua
+    //- Phương thức onBackPressed để thoát cái bàn phím (hiện khi dùng searchView)
+    //- Thoát cái bàn phím thôi chứ chưa thoát cái khung searchView
     @Override
     public void onBackPressed() {
         if(!exifSearchView.isIconified()){
@@ -1006,6 +1040,8 @@ public class MainActivity extends AppCompatActivity {
         }
         super.onBackPressed();
     }
+    //==================================================
+
     //Hàm dùng để đưa giá trị album và image vào trong table TrashAlbumImage
     public void insertImageToDeleteAblbumTable(SQLiteDatabase db, String nameTable, String data) {
         try {
@@ -1076,5 +1112,3 @@ public class MainActivity extends AppCompatActivity {
 //        dbAlbum.close();
 //    }
 }
-
-
