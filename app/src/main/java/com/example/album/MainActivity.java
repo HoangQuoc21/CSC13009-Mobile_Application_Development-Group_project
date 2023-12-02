@@ -453,7 +453,6 @@ public class MainActivity extends AppCompatActivity {
                 imageListTrash.add(0, imgModel);
 
 
-
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
 
@@ -801,7 +800,7 @@ public class MainActivity extends AppCompatActivity {
     public void CreateTable(SQLiteDatabase db, String nameTable)
     {
         try {
-            String sqlQuery="CREATE TABLE IF NOT EXISTS "+nameTable+ " ("
+            String sqlQuery="CREATE TABLE IF NOT EXISTS \""+nameTable+ "\" ("
                     + " recID integer PRIMARY KEY autoincrement, "
                     + " nameText text ); ";
             db.execSQL(sqlQuery);
@@ -820,7 +819,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         try {
-            String sqlQuery="insert into "+nameTable+"(nameText) values ('"+data+"');";
+            String sqlQuery="insert into \""+nameTable+"\"(nameText) values ('"+data+"');";
             db.execSQL(sqlQuery);
         }
         catch (SQLException e)
@@ -833,7 +832,7 @@ public class MainActivity extends AppCompatActivity {
     public void deleteDataInTable(SQLiteDatabase db, String nameTable, String data)
     {
         try {
-            String sqlQuery="DELETE From "+nameTable+" Where nameText= '"+ data +"' ;";
+            String sqlQuery="DELETE From \""+nameTable+"\" Where nameText= '"+ data +"' ;";
             db.execSQL(sqlQuery);
         }
         catch (SQLException e)
@@ -847,7 +846,7 @@ public class MainActivity extends AppCompatActivity {
     {
         try {
             //3. truy van
-            String sql = "select * from "+ nameTable;
+            String sql = "select * from \""+ nameTable+"\"";
             Cursor c1 = db.rawQuery(sql, null);
             c1.moveToPosition(-1);
             nameTextList.clear();
@@ -867,7 +866,7 @@ public class MainActivity extends AppCompatActivity {
     // isValueExists là hàm dùng để kiểm tra xem giá trị valueToCheck đã tồn tại trong table hay chưa
     public boolean isValueExists(SQLiteDatabase db , String nameTable ,String valueToCheck) {
         //3. truy van
-        String sql = "select * from "+ nameTable+ " Where nameText = '"+ valueToCheck +"' ;";
+        String sql = "select * from \""+ nameTable+ "\" Where nameText = '"+ valueToCheck +"' ;";
         Cursor c1 = db.rawQuery(sql, null);
         c1.moveToPosition(-1);
 
@@ -882,7 +881,7 @@ public class MainActivity extends AppCompatActivity {
     public void deleteTable(SQLiteDatabase db, String nameTable)
     {
         try {
-            String sqlQuery="DROP TABLE IF EXISTS "+nameTable;
+            String sqlQuery="DROP TABLE IF EXISTS \""+nameTable+"\"";
             db.execSQL(sqlQuery);
         }
         catch(SQLException e)
@@ -897,7 +896,7 @@ public class MainActivity extends AppCompatActivity {
         try {
 
             //3. truy van
-            String sql = "select * from listNameTable";
+            String sql = "select * from \"listNameTable\"";
             Cursor c1 = db.rawQuery(sql, null);
             c1.moveToPosition(-1);
             while( c1.moveToNext() ){
@@ -931,8 +930,12 @@ public class MainActivity extends AppCompatActivity {
                 int recId = c1.getInt(0);
                 String nameTable = c1.getString(1);
                 String imageLink=c1.getString(2);
-                insertDataToTable(db,nameTable,imageLink);
+                if(isValueExists(db,"listNameTable",nameTable))
+                {
+                    insertDataToTable(db,nameTable,imageLink);
+                }
             }
+            deleteAllDataInTableTrashAlbumImage(db);
         }
         catch (SQLException e)
         {
@@ -1013,7 +1016,10 @@ public class MainActivity extends AppCompatActivity {
                 int recId = c1.getInt(0);
                 String nameTable = c1.getString(1);
                 String imageLink=c1.getString(2);
-                insertDataToTable(db,nameTable,imageLink);
+                if(isValueExists(db,"listNameTable",nameTable))
+                {
+                    insertDataToTable(db,nameTable,imageLink);
+                }
             }
             // Sau khi đã restore ảnh vào toàn bộ album trước đó thì xóa thông tin về album và ảnh khỏi table restore
             deleteOneDataFromTrashAlbumImage(db,data);

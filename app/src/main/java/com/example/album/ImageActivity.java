@@ -245,6 +245,7 @@ public class ImageActivity extends AppCompatActivity {
                     intentdeleteInAlbum.putExtra("imageLink",imagePath);
                     sendBroadcast(intentdeleteInAlbum);
                     Toast.makeText(ImageActivity.this, "Delete image in this album was successful", Toast.LENGTH_SHORT).show();
+                    finish();
                 }
             });
 
