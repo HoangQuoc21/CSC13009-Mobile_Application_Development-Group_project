@@ -290,6 +290,14 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
             {
                 customActiveButton(btnAll); // custom tiêu đề của tab All
                 loadLayout(R.layout.main_all, 1); // load layout của tab All lên frame
+
+                //=========================== QUOC ADDED THIS ==================================
+                //Xoa thong tin dang tim kiem trong search view di va huy chon search view luon
+                if(!exifSearchView.isIconified()){
+                    exifSearchView.setQuery("",false);
+                    exifSearchView.setIconified(true);
+                }
+                //==============================================================================
             }
         });
 
@@ -391,6 +399,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         //====================================== QUOC WROTE THIS ===================================
         //Phương thức này dùng để xử lý khi nhập chuỗi tìm kiếm trong searchView
         exifSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+
             //Xử lý khi nhập nguyên chuỗi tìm kiếm rồi bấm enter
             @Override
             public boolean onQueryTextSubmit(String query) {
