@@ -172,66 +172,34 @@ public class ImageActivity extends AppCompatActivity {
             btnInfo.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // Your code here.
-                    //Tạo biến File giúp đọc file
-                    File file = new File(imagePath);
 
-                    //tạo input stream để đọc vào Uri của ảnh
-                    InputStream in = null;
-                    try {
-                        //Đọc thông tin ảnh
-                        String name = file.getName();
-                        String place = file.getPath();
+                    //Phai them bien context thi moi doc thong tin exif cua anh trong bien imageModel duoc
+                    Context context = ImageActivity.this;
+                    //tao bien readImage de doc cac thong tin exif
+                    imageModel readImage = new imageModel(imageUri, imagePath,context);
 
-                        //đọc uri ảnh
-                        in = getContentResolver().openInputStream(imageUri);
+                    //tạo string chứa các thông tin exif
+                    // Create a StringBuilder to format the exif information
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("Name: ").append(readImage.name).append("\n");
+                    sb.append("Saved place: ").append(readImage.savedPlace).append("\n");
+                    sb.append("Date and time: ").append(imageDate).append("\n");
+                    sb.append("Image length: ").append(readImage.imageLength).append(" pixels\n");
+                    sb.append("Image width: ").append(readImage.imageWidth).append(" pixels\n");
+                    sb.append("Camera make: ").append(readImage.cameraMake).append("\n");
+                    sb.append("Camera model: ").append(readImage.cameraModel).append("\n");
 
-                        //tạo biến exifinterface để đọc các thông tin exif
-                        ExifInterface exif = new ExifInterface(in);
-                        // Now you can extract any Exif tag you want
-                        // Assuming the image is a JPEG or supported raw format
+                    //tạo hộp thoại dialog để hiển thị thông tin exif
+                    // Create an AlertDialog.Builder object to build the dialog
+                    AlertDialog.Builder builder = new AlertDialog.Builder(ImageActivity.this);
+                    builder.setTitle("Image Information");
+                    builder.setMessage(sb.toString());
+                    builder.setPositiveButton("OK", null);
 
-                        //lấy dữ liệu exif
-                        // Get some exif attributes, you can get more from the documentation
-                        String dateTime = exif.getAttribute(ExifInterface.TAG_DATETIME);
-                        String imageLength = exif.getAttribute(ExifInterface.TAG_IMAGE_LENGTH);
-                        String imageWidth = exif.getAttribute(ExifInterface.TAG_IMAGE_WIDTH);
-                        String make = exif.getAttribute(ExifInterface.TAG_MAKE);
-                        String model = exif.getAttribute(ExifInterface.TAG_MODEL);
-
-
-                        //tạo string chứa các thông tin exif
-                        // Create a StringBuilder to format the exif information
-                        StringBuilder sb = new StringBuilder();
-                        sb.append("Name: ").append(name).append("\n");
-                        sb.append("Saved place: ").append(place).append("\n");
-                        sb.append("Date and time: ").append(dateTime).append("\n");
-                        sb.append("Image length: ").append(imageLength).append(" pixels\n");
-                        sb.append("Image width: ").append(imageWidth).append(" pixels\n");
-                        sb.append("Camera make: ").append(make).append("\n");
-                        sb.append("Camera model: ").append(model).append("\n");
-
-                        //tạo hộp thoại dialog để hiển thị thông tin exif
-                        // Create an AlertDialog.Builder object to build the dialog
-                        AlertDialog.Builder builder = new AlertDialog.Builder(ImageActivity.this);
-                        builder.setTitle("Image Information");
-                        builder.setMessage(sb.toString());
-                        builder.setPositiveButton("OK", null);
-
-                        //hiển thị hộp thoại dialog
-                        // Create and show the dialog
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
-
-                    } catch (IOException e) {
-                        // Handle any errors
-                    } finally {
-                        if (in != null) {
-                            try {
-                                in.close();
-                            } catch (IOException ignored) {}
-                        }
-                    }
+                    //hiển thị hộp thoại dialog
+                    // Create and show the dialog
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
                 }
             });
             // Nút yêu cầu xóa ảnh trong album
