@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<View> savedViewsTrash = new ArrayList<>();
 
     // danh sách ảnh chỉ được đọc từ thư viện ảnh vào lần đầu tiên mở ứng dụng
-    boolean isReadSdcardCalled = false;
+    boolean isPermissionGranted = false;
 
 
     @SuppressLint("MissingInflatedId")
@@ -245,8 +245,8 @@ public class MainActivity extends AppCompatActivity {
                     .withListener(new PermissionListener() {
                         @Override
                         public void onPermissionGranted(PermissionGrantedResponse permissionGrantedResponse) {
-                            ReadSdcard(MainActivity.this);
-                            isReadSdcardCalled = true; // đánh dấu là đã đọc
+                            //ReadSdcard(MainActivity.this);
+                            isPermissionGranted = true; // đánh dấu là đã đọc
                         }
 
                         @Override
@@ -383,8 +383,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        imagesByDate.clear();
-        ReadSdcard(MainActivity.this);
+        if (isPermissionGranted) {
+            imagesByDate.clear();
+            dates.clear();
+            ReadSdcard(MainActivity.this);
+        }
     }
 
 
