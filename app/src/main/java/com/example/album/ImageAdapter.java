@@ -33,7 +33,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.viewHolder> 
     @Override
     public void onBindViewHolder(ImageAdapter.viewHolder holder, int position) {
         Glide.with(context).load(list.get(position).getPath()).into(holder.imageView);
-
         // Khi click vào ảnh thì sẽ kích hoạt Activity xem ảnh đơn
         holder.imageView.setOnClickListener(new View.OnClickListener() {
             @Override

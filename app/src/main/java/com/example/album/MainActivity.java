@@ -394,11 +394,14 @@ public class MainActivity extends AppCompatActivity {
                 MediaStore.Images.Media.DATE_TAKEN
         };
 
+        String orderBy = MediaStore.Images.ImageColumns.DATE_TAKEN + " DESC";
+
         try(Cursor cursor = MainActivity.this.getContentResolver().query(
                 collection,
                 projection,
                 null,
-                null
+                null,
+                orderBy
         )){
             int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
             int dateTakenColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);

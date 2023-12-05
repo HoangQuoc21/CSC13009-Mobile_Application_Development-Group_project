@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import android.app.Dialog;
 import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -17,8 +18,11 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.media.ExifInterface;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -39,9 +43,14 @@ import com.yalantis.ucrop.UCrop;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 public class ImageActivity extends AppCompatActivity {
     View frame;
@@ -60,6 +69,7 @@ public class ImageActivity extends AppCompatActivity {
 
     //Khai báo ImageView
     ImageView imageView;
+    imageModel croppedImage;
 
     //Khai báo ScaleGestureDetector dùng để scale ảnh (Zoom in, Zoom out)
     private ScaleGestureDetector scaleGestureDetector;
@@ -181,8 +191,6 @@ public class ImageActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     //Toast.makeText(ImageActivity.this, "Edit", Toast.LENGTH_SHORT).show();
-                    //imageEdit.launch("image/" + imagePath);
-
                     // Tạo intent, truyền imagePath và start activity image cropper với mong muốn
                     // nhận được kết quả là một imagePath của ảnh sau khi thực hiện chỉnh sửa
                     Intent editIntent = new Intent(ImageActivity.this, ImageCropper.class);
@@ -607,31 +615,103 @@ public class ImageActivity extends AppCompatActivity {
             // Lấy kết quả trả về và parse nó sang Uri để ghi
             // vào imageView, thay cho image cũ
             String result = data.getStringExtra("Crop");
-            Uri resultUri = data.getData();
+            Uri resultUri = null;
+
+            Bitmap bitmap = null;
+
             if (result != null) {
                 resultUri = Uri.parse(result);
+                saveImage(resultUri);
             }
+
             try {
                 Bitmap bmEditedImage = BitmapFactory.decodeStream(
                         getContentResolver().openInputStream(resultUri));
                 if (bmEditedImage != null) {
 
-                    // Đặt ảnh vào ImageView
-                    imageView.setImageBitmap(bmEditedImage);
+                    // Tạo một ImageActivity mới để hiển thị ảnh vừa cắt
+                    String dateTaken = croppedImage.getDateTaken();
+                    Bundle mybundle = new Bundle();
+                    mybundle.putString("imageLink", result);
+                    mybundle.putString("imageDate", dateTaken);
+                    mybundle.putString("imageIndex", String.valueOf(croppedImage.getId()));
+                    mybundle.putString("footer", "1");
 
+                    Intent intent = new Intent(this, ImageActivity.class);
+                    intent.putExtra("package", mybundle);
+                    startActivity(intent);
                     //Xử lý scale ảnh (Zoom in, Zoom out);
                     //scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
-                    Toast.makeText(this, "Load ảnh sau khi crop nè :>", Toast.LENGTH_SHORT).show();
                 }
                 else {
                     //thông báo để kiểm tra
-                    Toast.makeText(this, "Khum load được kết quả crop :<", Toast.LENGTH_SHORT).show();
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
         }else {
-            Toast.makeText(this, "Trở về, hong cắt nữa ~~", Toast.LENGTH_SHORT).show();
         }
+    }
+
+//    public void saveImage(Bitmap bitmap, String title) {
+//        String description = "edited image";
+//        String savedImageURL = MediaStore.Images.Media.insertImage(
+//                getContentResolver(),
+//                bitmap,
+//                title,
+//                description
+//        );
+//        Toast.makeText(ImageActivity.this, "Saved image", Toast.LENGTH_SHORT).show();
+//    }
+
+    public void saveImage(Uri uri) {
+//        try {
+//            InputStream inputStream = getContentResolver().openInputStream(uri);
+//            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+//
+//            String title = "My Image";
+//            String description = "My image description";
+//            ContentValues values = new ContentValues();
+//
+//            values.put(MediaStore.Images.Media.DISPLAY_NAME, title);
+//            values.put(MediaStore.Images.Media.DESCRIPTION, description);
+//            values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+//
+//            Uri imageUri = this.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+//            OutputStream outputStream = getContentResolver().openOutputStream(imageUri);
+//
+//            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+//            outputStream.close();
+//
+//            Toast.makeText(ImageActivity.this, "Saved image", Toast.LENGTH_SHORT).show();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            Toast.makeText(ImageActivity.this, "Error image", Toast.LENGTH_SHORT).show();
+//        }
+
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+            Date now = new Date();
+            String fileName = formatter.format(now) + "_cropped" + ".jpg";
+            File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "AlbumApp");
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+            File file = new File(directory, fileName);
+            OutputStream outputStream = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+            outputStream.flush();
+            outputStream.close();
+            MediaScannerConnection.scanFile(this, new String[]{file.getPath()}, new String[]{"image/jpeg"}, null);
+
+            croppedImage = new imageModel(0, formatter.toString(), uri);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }

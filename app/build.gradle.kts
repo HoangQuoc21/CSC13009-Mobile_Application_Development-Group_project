@@ -42,5 +42,6 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     implementation("com.karumi:dexter:6.2.3")
+
     implementation ("com.github.yalantis:ucrop:2.2.6-native")
 }

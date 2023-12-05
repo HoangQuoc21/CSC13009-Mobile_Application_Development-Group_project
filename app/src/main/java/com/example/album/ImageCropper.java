@@ -26,7 +26,7 @@ public class ImageCropper extends AppCompatActivity {
             srcUri = intent.getStringExtra("SendImageData");
             imageUri = Uri.parse(srcUri);
         }
-        desUri = new StringBuilder(UUID.randomUUID().toString()).append(".jpg").toString();
+        desUri = new StringBuilder(UUID.randomUUID().toString()).append(".jpeg").toString();
 
         UCrop.Options options = new UCrop.Options();
         UCrop.of(imageUri, Uri.fromFile(new File(getCacheDir(), desUri)))
@@ -49,6 +49,8 @@ public class ImageCropper extends AppCompatActivity {
 
         } else if (resultCode == UCrop.RESULT_ERROR) {
             final Throwable cropError = UCrop.getError(data);
+        } else {
+            finish();
         }
     }
 }
