@@ -378,6 +378,16 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(receiver);
     }
 
+    // Refresh danh sach anh
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        imagesByDate.clear();
+        ReadSdcard(MainActivity.this);
+    }
+
+
     // Tải dữ liệu ảnh URI trong bộ nhớ
     private void ReadSdcard(Context context){
         Uri collection;
