@@ -12,6 +12,8 @@ public class imageModel {
     // ID ảnh (mỗi ảnh khi đọc từ bộ nhớ sẽ được gán 1 ID để dễ xử lý việc khi Restore ảnh
     // từ Trash thì ảnh sẽ trở lại đúng vị trí ban đầu)
     private int id;
+    private int deleteId;
+    private int deleteTimeRemain;
     private String dateTaken;
     private Uri path;
 
@@ -109,24 +111,33 @@ public class imageModel {
     public int getId() {
         return id;
     }
-
+    public int getDeleteId() {
+        return deleteId;
+    }
     public String getDateTaken() {
         return dateTaken;
     }
-
     public Uri getPath() {
         return path;
     }
+    public int getDeleteTimeRemain(){
+        return deleteTimeRemain;
+    }
+
 
     public void setId(int id) {
         this.id = id;
     }
-
+    public void setDeleteId(int deleteId) {
+        this.deleteId = deleteId;
+    }
     public void setDateTaken(String dateTaken) {
         this.dateTaken = dateTaken;
     }
-
     public void setPath(Uri path) {
         this.path = path;
+    }
+    public void setDeleteTimeRemain(int deleteTimeRemain) {
+        this.deleteTimeRemain = deleteTimeRemain;
     }
 }

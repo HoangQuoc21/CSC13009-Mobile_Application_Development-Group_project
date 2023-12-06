@@ -1,28 +1,49 @@
 package com.example.album;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.Data;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.WorkRequest;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.PersistableBundle;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -37,6 +58,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.karumi.dexter.Dexter;
@@ -46,10 +68,17 @@ import com.karumi.dexter.listener.PermissionGrantedResponse;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 //Quoc implement SortingDatesInterface de sap xep thoi gian cac anh giam dan theo ngay
 public class MainActivity extends AppCompatActivity implements SortingDatesInterface {
@@ -79,6 +108,8 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
     ImageAdapter adapterTrash;
     ArrayList<imageModel> imageListTrash;
     Button btnRestoreAll, btnDeleteAll;
+    SQLiteDatabase dbTrash; // database Trash
+    JobScheduler deleteScheduler; //service tự động xóa ảnh sau 24h
 
 
     // Các nút chuyển Activity
@@ -97,8 +128,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
     ArrayList<View> savedViewsAlbum = new ArrayList<>();
     ArrayList<View> savedViewsTrash = new ArrayList<>();
 
-    // danh sách ảnh chỉ được đọc từ thư viện ảnh vào lần đầu tiên mở ứng dụng
-    boolean isReadSdcardCalled = false;
 
     //Spinner và SearchView phục vụ cho việc filter ảnh theo thông tin exif
     SearchView exifSearchView;
@@ -110,6 +139,10 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //service tự động xóa ảnh sau 24h
+        deleteScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+
+
         //imageList = new ArrayList<>();
         imageListTrash = new ArrayList<>();
         listLinkAlbum= new ArrayList<>();
@@ -119,15 +152,14 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         listAlbum= new ArrayList<>();
 
 
-        // Tạo Database
-        // 1. Tao database
+        // 1. Tạo database album
         try {
             dbAlbum=this.openOrCreateDatabase("MyDatabase",MODE_PRIVATE,null);
 
         }
         catch (SQLException e){}
-        // Tạo bảng chứa danh sách các tên album;
 
+        // Tạo bảng chứa danh sách các tên album;
         CreateTable(dbAlbum,"listNameTable");
 
         // Tạo bảnh chứa danh sách album và ảnh để restore từ trash
@@ -137,7 +169,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         insertDataToTable(dbAlbum,"listNameTable","Favorite");
 
         // Lấy danh sách tên table từ bảng listNameTable
-
         getListFromTable(dbAlbum,listNameAlbum,"listNameTable");
 
         // Khởi tạo dữ liệu cho các Album, nếu Album chưa tồn tại thì tạo Table cho ALbum đó luôn
@@ -146,6 +177,25 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         {
             CreateTable(dbAlbum,listNameAlbum.get(index));
         }
+
+
+
+        // Tạo database Trash
+        try
+        {
+            dbTrash=this.openOrCreateDatabase("dbTrash",MODE_PRIVATE,null);
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+
+        // tạo table trong database Trash
+        CreateTableTrash();
+        // đọc danh sách ảnh Trash từ database
+        getListFromTableTrash();
+
+
 
         // khung để đặt 3 layout tương ứng với 3 tab
         frame = findViewById(R.id.frame);
@@ -162,6 +212,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         recyclerViewTrash.setLayoutManager(layoutManagerTrash);
         adapterTrash = new ImageAdapter("2", imageListTrash,MainActivity.this);
         recyclerViewTrash.setAdapter(adapterTrash);
+
         nTrash = 1;
 
         // xử lý sự kiện nhấn nút Restore All trong Trash
@@ -179,25 +230,53 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
 
                     // remove ảnh khỏi Trash
                     imageModel imgModel = imageListTrash.remove(0);
-                    // lấy mảng hình ảnh hiện tại trong All có dakeTaken là dakeTaken của ảnh
-                    // cần restore
-                    ArrayList<imageModel> containerList = imagesByDate.get(imageDate);
 
-                    // duyệt qua mảng hình ảnh (có ID đang được sắp xếp theo thứ tự tăng dần)
-                    // để chèn hình ảnh cần restore vào đúng chỗ
-                    int insertIndex = 0;
-                    for (int i = 0; i < containerList.size(); i++)
+                    // cancel việc đếm số giờ còn lại
+                    cancelCountTime(imgModel.getDeleteId());
+                    imgModel.setDeleteTimeRemain(-1);
+                    // cancel service tự động xóa sau 24h
+                    cancelDelete(imgModel.getDeleteId());
+                    imgModel.setDeleteId(0);
+
+                    // nếu trong All không tồn tại dateTaken của ảnh này
+                    if (!imagesByDate.containsKey(imageDate))
                     {
-                        if (imageID < containerList.get(i).getId())
+                        // thêm dateTaken này vào
+                        dates.add(imageDate);
+                        imagesByDate.put(imageDate, new ArrayList<imageModel>());
+                        imagesByDate.get(imageDate).add(imgModel);
+
+                        // sort lại ảnh sau khi thêm dateTaken
+                        SortingDatesInterface.sortDatesDescending(dates);
+                        SortingDatesInterface.sortHashMapByKeyDescending(imagesByDate);
+                    }
+                    // nếu trong All đã tồn tại dateTaken của ảnh này thì chỉ cần add ảnh này vào
+                    // dateTaken đó
+                    else
+                    {
+                        // lấy mảng hình ảnh hiện tại trong All có dakeTaken là dakeTaken của ảnh cần restore
+                        ArrayList<imageModel> containerList = imagesByDate.get(imageDate);
+
+                        // duyệt qua mảng hình ảnh (có ID đang được sắp xếp theo thứ tự tăng dần)
+                        // để chèn hình ảnh cần restore vào đúng chỗ
+                        int insertIndex = 0;
+                        for (int i = 0; i < containerList.size(); i++)
                         {
-                            break;
+                            if (imageID < containerList.get(i).getId())
+                            {
+                                break;
+                            }
+
+                            insertIndex++;
                         }
 
-                        insertIndex++;
-                    }
+                        containerList.add(insertIndex, imgModel);
 
-                    containerList.add(insertIndex, imgModel);
+                        // xóa ảnh trong database Trash
+                        Utils.deleteDataInTableTrash(getApplicationContext(), imageID);
+                    }
                 }
+
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
                 restoreDataIntoAllTable(dbAlbum);
@@ -214,7 +293,9 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
             }
         });
 
+
         // load layout album lên để kết nối với các widget, adapter,... trong đó
+
 
         // load layout all lên để kết nối với các widget, adapter,... trong đó
         loadLayout(R.layout.main_all, 1);
@@ -259,8 +340,20 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         Drawable activeDrawable = getResources().getDrawable(R.drawable.custom_button_active,null);
         activeButton.setBackground(activeDrawable);
 
-//        if(isReadSdcardCalled == false)
-//        {
+
+        //===================================== TRUC ADD THIS ======================================
+        // kiểm tra phiên bản Android để lựa chọn cách xin cấp quyền cho phù hợp
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Kiểm tra xem ứng dụng có quyền MANAGE_EXTERNAL_STORAGE chưa
+            // (quyền này cần để xóa ảnh khỏi thư viện ảnh của thiết bị)
+            if(!Environment.isExternalStorageManager()){
+                // Nếu chưa thì mở phần Setting để người dùng cấp quyền
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                Uri uri = Uri.fromParts("package", getPackageName(), null);
+                intent.setData(uri);
+                startActivity(intent);
+            }
+
             // Kiểm tra cho phép truy cập bộ nhớ ngoài bằng Dexter
             Dexter.withContext(this)
                     .withPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -268,7 +361,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                         @Override
                         public void onPermissionGranted(PermissionGrantedResponse permissionGrantedResponse) {
                             ReadSdcard(MainActivity.this);
-                            isReadSdcardCalled = true; // đánh dấu là đã đọc
                         }
 
                         @Override
@@ -281,7 +373,22 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                             permissionToken.continuePermissionRequest();
                         }
                     }).check();
-//        }
+        }
+        else
+        {
+            if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+
+                if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                } else {
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            1002);
+                }
+            } else {
+                ReadSdcard(MainActivity.this);
+            }
+        }
 
 
         btnAll.setOnClickListener(new View.OnClickListener() {
@@ -355,7 +462,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                          openDialogAddAlbum(Gravity.CENTER);
                      }
                  });
-
             }
         });
 
@@ -376,6 +482,10 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         IntentFilter filter_restore = new IntentFilter("restoreImage");
         // Broadcast của delete 1 ảnh trong Trash
         IntentFilter filter_deleteTrash = new IntentFilter("deleteTrash");
+        // Broadcast của auto delete trash sau 24h
+        IntentFilter filter_autoDeleteTrash = new IntentFilter("autoDeleteTrash");
+        // Broadcast của auto update time remain của ảnh trong Trash
+        IntentFilter filter_autoCountTime = new IntentFilter("autoCountTime");
         // Broadcast của click addFavorite
         IntentFilter filter_addFavorite = new IntentFilter("addFavorite");
         // Broadcast của click delete Album
@@ -391,6 +501,8 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         registerReceiver(receiver, filter_moveToTrash);
         registerReceiver(receiver, filter_restore);
         registerReceiver(receiver, filter_deleteTrash);
+        registerReceiver(receiver, filter_autoDeleteTrash);
+        registerReceiver(receiver, filter_autoCountTime);
         registerReceiver(receiver, filter_addFavorite);
         registerReceiver(receiver, filter_deleteAlbum);
         registerReceiver(receiver, filter_addImageAlbum);
@@ -448,6 +560,21 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         unregisterReceiver(receiver);
     }
 
+    //===================================== TRUC ADD THIS ======================================
+    // hành động thực hiện khi người dùng đồng ý cấp quyền
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1002) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // đọc ảnh từ thiết bị
+                ReadSdcard(MainActivity.this);
+            } else {
+            }
+        }
+    }
+    //==========================================================================================
+
     // Tải dữ liệu ảnh URI trong bộ nhớ
     private void ReadSdcard(Context context){
         Uri collection;
@@ -461,14 +588,17 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
 
         String projection[] = new String[]{
                 MediaStore.Images.Media._ID,
-                MediaStore.Images.Media.DATE_TAKEN
+                MediaStore.Images.Media.DATE_TAKEN,
         };
+
+//        String sortOrder = MediaStore.Images.Media.DATE_TAKEN + " DESC";
 
         try(Cursor cursor = MainActivity.this.getContentResolver().query(
                 collection,
                 projection,
                 null,
                 null
+//                ,sortOrder
         )){
             int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
             int dateTakenColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
@@ -477,31 +607,53 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
 
             while (cursor.moveToNext()){
                 long id = cursor.getLong(idColumn);
+                Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,id);
 
-                // format date dạng unix timestamp sang dạng dd-MM yyyy và dùng làm key cho hashMap
-                String dateTaken_unix = cursor.getString(dateTakenColumn);
-                String dateTaken=null;
-                if (dateTaken_unix != null) {
-                    try {
-                        long dv = Long.valueOf(dateTaken_unix);
-                        Date df = new java.util.Date(dv);
-                        dateTaken = new SimpleDateFormat("dd-MM-yyyy").format(df);
-                        // Thực hiện các công việc khác với dateTaken nếu cần
-                    } catch (NumberFormatException e) {
-                        // Xử lý lỗi khi không thể chuyển đổi thành số
-                        e.printStackTrace();
+                // Kiểm tra nếu ảnh đang trong Trash của app thì không đọc vào All nữa
+                boolean isTrash = false;
+
+                //duyệt qua mảng Trash
+                for(int k=0;k<imageListTrash.size();k++)
+                {
+                    if(imageListTrash.get(k).getPath().equals(contentUri))
+                    {
+                        // update id của ảnh đó trong database và mảng Trash vì lỡ người dùng
+                        // vừa thêm xóa ảnh trong thiết bị, dẫn đến id cũ không còn đúng
+                        updateIdInTableTrash(imageListTrash.get(k).getId(), i);
+                        imageListTrash.get(k).setId(i);
+                        isTrash = true;
+                        break;
                     }
                 }
 
-                Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,id);
+                // nếu không phải ảnh trong Trash thì đọc bình thường
+                if(!isTrash)
+                {
+                    // format date dạng unix timestamp sang dạng dd-MM yyyy và dùng làm key cho hashMap
+                    String dateTaken_unix = cursor.getString(dateTakenColumn);
+                    String dateTaken=null;
+                    if (dateTaken_unix != null) {
+                        try {
+                            long dv = Long.valueOf(dateTaken_unix);
+                            Date df = new java.util.Date(dv);
+                            dateTaken = new SimpleDateFormat("dd-MM-yyyy").format(df);
+                            // Thực hiện các công việc khác với dateTaken nếu cần
+                        } catch (NumberFormatException e) {
+                            // Xử lý lỗi khi không thể chuyển đổi thành số
+                            e.printStackTrace();
+                        }
+                    }
 
-                if (!imagesByDate.containsKey(dateTaken)) {
-                    dates.add(dateTaken);
-                    imagesByDate.put(dateTaken, new ArrayList<imageModel>());
+                    if (!imagesByDate.containsKey(dateTaken)) {
+                        dates.add(dateTaken);
+                        imagesByDate.put(dateTaken, new ArrayList<imageModel>());
+                    }
+
+                    imageModel addingImage = new imageModel(i, dateTaken, contentUri);
+                    addingImage.setExif(contentUri,linkImage,context);
+                    imagesByDate.get(dateTaken).add(addingImage);
                 }
-                imageModel addingImage = new imageModel(i, dateTaken, contentUri);
-                addingImage.setExif(contentUri,linkImage,context);
-                imagesByDate.get(dateTaken).add(addingImage);
+
                 i++;
             }
 
@@ -532,6 +684,11 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 imageModel imgModel = containerList.remove(Integer.parseInt(imageIndex));
                 imageListTrash.add(0, imgModel);
 
+                if(containerList.size()==0)
+                {
+                    imagesByDate.remove(imageDate);
+                    dates.remove(imageDate);
+                }
 
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
@@ -541,6 +698,15 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 linkImage=intent.getStringExtra("imageLink");
                 deleteDataFromAllTable(dbAlbum,linkImage);
                 /*****************************************/
+
+                // tạo id riêng biệt cho mỗi lượt xóa để service, restore,... biết là ảnh nào
+                int deleteId = (int) (System.currentTimeMillis() / 1000);
+                insertDataToTableTrash(imgModel.getId(),deleteId,imgModel.getDateTaken(),imgModel.getPath().toString());
+                imgModel.setDeleteId(deleteId);
+
+                // đặt lịch đếm giờ và xóa tự động
+                scheduleCountTime(deleteId, imgModel.getId());
+                scheduleDelete(deleteId, imgModel.getId(), linkImage);
             }
 
             // lắng nghe sự kiện bấm nút Restore: di chuyển ảnh đó từ Trash qua All
@@ -548,22 +714,41 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
             {
                 String imageIndexTrash = intent.getStringExtra("imageIndexTrash");
                 imageModel imgModel = imageListTrash.remove(Integer.parseInt(imageIndexTrash));
+
+                cancelCountTime(imgModel.getDeleteId());
+                imgModel.setDeleteTimeRemain(-1);
+                cancelDelete(imgModel.getDeleteId());
+                imgModel.setDeleteId(0);
+
                 int imageID = imgModel.getId();
                 String imageDate = imgModel.getDateTaken();
-                ArrayList<imageModel> containerList = imagesByDate.get(imageDate);
 
-                int insertIndex = 0;
-                for (int i = 0; i < containerList.size(); i++)
+                if (!imagesByDate.containsKey(imageDate))
                 {
-                    if (imageID < containerList.get(i).getId())
+                    dates.add(imageDate);
+                    imagesByDate.put(imageDate, new ArrayList<imageModel>());
+                    imagesByDate.get(imageDate).add(imgModel);
+
+                    SortingDatesInterface.sortDatesDescending(dates);
+                    SortingDatesInterface.sortHashMapByKeyDescending(imagesByDate);
+                }
+                else
+                {
+                    ArrayList<imageModel> containerList = imagesByDate.get(imageDate);
+
+                    int insertIndex = 0;
+                    for (int i = 0; i < containerList.size(); i++)
                     {
-                        break;
+                        if (imageID < containerList.get(i).getId())
+                        {
+                            break;
+                        }
+
+                        insertIndex++;
                     }
 
-                    insertIndex++;
+                    containerList.add(insertIndex, imgModel);
                 }
-
-                containerList.add(insertIndex, imgModel);
 
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
@@ -575,18 +760,64 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 restoreOneDataIntoALLTable(dbAlbum,imageLink);
                 /*
                 * Success*/
+
+                Utils.deleteDataInTableTrash(getApplicationContext(), imageID);
             }
 
             // lắng nghe sự kiện xóa 1 ảnh khỏi thùng rác (xóa vĩnh viễn)
             if ("deleteTrash".equals(intent.getAction()))
             {
                 String imageIndexTrash = intent.getStringExtra("imageIndexTrash");
-                imageListTrash.remove(Integer.parseInt(imageIndexTrash));
+                imageModel imgModel = imageListTrash.remove(Integer.parseInt(imageIndexTrash));
                 adapterTrash.notifyDataSetChanged();
+
+                cancelCountTime(imgModel.getDeleteId());
+                imgModel.setDeleteTimeRemain(-1);
+                cancelDelete(imgModel.getDeleteId());
+                imgModel.setDeleteId(0);
+
                 //Thêm bởi quân
                 String linkImage= intent.getStringExtra("linkImage");
-                deleteOneDataFromTrashAlbumImage(dbAlbum,linkImage);
+                Utils.deleteOneDataFromTrashAlbumImage(getApplicationContext(),linkImage);
                 //xong
+
+                // xóa trong database Trash
+                Utils.deleteDataInTableTrash(getApplicationContext(), imgModel.getId());
+                // xóa trong thư viện ảnh của thiết bị
+                Utils.deleteImageInDevice(getApplicationContext(), imgModel.getPath());
+            }
+
+            // lắng nghe sự kiện tự động xóa ảnh trong Trash sau 24h
+            if ("autoDeleteTrash".equals(intent.getAction()))
+            {
+                int imageId = intent.getIntExtra("imageId", -1);
+
+                for(int i=0;i<imageListTrash.size();i++)
+                {
+                    if(imageListTrash.get(i).getId() == imageId)
+                    {
+                        imageListTrash.remove(imageListTrash.get(i));
+                        adapterTrash.notifyDataSetChanged();
+                        break;
+                    }
+                }
+            }
+
+            // lắng nghe sự kiện tự động update time remaining của ảnh trong Trash sau 1h
+            if ("autoCountTime".equals(intent.getAction()))
+            {
+                int imageId = intent.getIntExtra("imageId", -1);
+                int timeRemain = intent.getIntExtra("timeRemain", -1);
+
+                for(int i=0;i<imageListTrash.size();i++)
+                {
+                    if(imageListTrash.get(i).getId() == imageId)
+                    {
+                        imageListTrash.get(i).setDeleteTimeRemain(timeRemain);
+                        adapterTrash.notifyItemChanged(i);
+                        break;
+                    }
+                }
             }
 
             // lắng nghe sự kiện Thêm ảnh vào album Favorite (yêu thích)
@@ -773,12 +1004,28 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
             @Override
             public void onClick(View v)
             {
+                for(int i=0;i<imageListTrash.size();i++)
+                {
+                    cancelCountTime(imageListTrash.get(i).getDeleteId());
+                    imageListTrash.get(i).setDeleteTimeRemain(-1);
+                    cancelDelete(imageListTrash.get(i).getDeleteId());
+                    imageListTrash.get(i).setDeleteId(0);
+
+                    // xóa trong database Trash
+                    Utils.deleteDataInTableTrash(getApplicationContext(), imageListTrash.get(i).getId());
+                    // xóa trong thư viện ảnh của thiết bị
+                    Utils.deleteImageInDevice(getApplicationContext(), imageListTrash.get(i).getPath());
+                }
+
+                // xóa trong mảng
                 imageListTrash.clear();
                 adapterTrash.notifyDataSetChanged();
+
                 // Thêm bởi quân
                 // gọi hàm xóa toàn bộ thông tin trong TrashAlbumImage
                 deleteAllDataInTableTrashAlbumImage(dbAlbum);
                 // xong
+
                 dialog.dismiss();
             }
         });
@@ -887,7 +1134,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         }
         catch (SQLException e)
         {
-
+            e.printStackTrace();
         }
     }
 
@@ -904,7 +1151,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         }
         catch (SQLException e)
         {
-
+            e.printStackTrace();
         }
     }
 
@@ -917,7 +1164,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         }
         catch (SQLException e)
         {
-
+            e.printStackTrace();
         }
     }
 
@@ -939,7 +1186,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         }
         catch (SQLException e)
         {
-
+            e.printStackTrace();
         }
     }
 
@@ -966,7 +1213,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         }
         catch(SQLException e)
         {
-
+            e.printStackTrace();
         }
     }
 
@@ -991,7 +1238,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         }
         catch (SQLException e)
         {
-
+            e.printStackTrace();
         }
     }
 
@@ -1018,7 +1265,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         }
         catch (SQLException e)
         {
-
+            e.printStackTrace();
         }
     }
 
@@ -1036,7 +1283,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         }
         catch (SQLException e)
         {
-
+            e.printStackTrace();
         }
 
     }
@@ -1079,21 +1326,10 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         }
         catch (SQLException e)
         {
-
+            e.printStackTrace();
         }
     }
-    //hàm dùng để xóa toàn bộ thông tin của ảnh cụ thể (tên album và tên ảnh) khỏi TrashAlbumImage
-    public void deleteOneDataFromTrashAlbumImage(SQLiteDatabase db,String data)
-    {
-        try {
-            String sqlQuery="DELETE FROM TrashAlbumImage where nameImage= '"+data+"'; ";
-            db.execSQL(sqlQuery);
-        }
-        catch (SQLException e)
-        {
 
-        }
-    }
     //Hàm dùng để đưa ảnh trở về các album khi nhấn nút restore khi mở ảnh trong trash
     public void restoreOneDataIntoALLTable(SQLiteDatabase db, String data)
     {
@@ -1114,11 +1350,11 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 }
             }
             // Sau khi đã restore ảnh vào toàn bộ album trước đó thì xóa thông tin về album và ảnh khỏi table restore
-            deleteOneDataFromTrashAlbumImage(db,data);
+            Utils.deleteOneDataFromTrashAlbumImage(getApplicationContext(),data);
         }
         catch (SQLException e)
         {
-
+            e.printStackTrace();
         }
     }
 //    @Override
@@ -1126,4 +1362,135 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
 //        super.onStop();
 //        dbAlbum.close();
 //    }
+
+
+//========================================= ADD BY TRUC =============================================================
+    // tạo table trong database lưu ảnh trong Trash
+    public void CreateTableTrash()
+    {
+        try {
+            String sqlQuery="CREATE TABLE IF NOT EXISTS \"trash\"" + " ("
+                    + "id integer PRIMARY KEY, "
+                    + "idDelete integer, "
+                    + "hourRemain integer, "
+                    + "dateTaken text, "
+                    + "link text); ";
+            dbTrash.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    // đọc danh sách ảnh trong Trash từ database
+    public void getListFromTableTrash()
+    {
+        try
+        {
+            String sql = "select * from \"trash\"";
+            Cursor c1 = dbTrash.rawQuery(sql, null);
+            c1.moveToPosition(-1);
+
+            imageListTrash.clear();
+
+            //duyệt qua từng dòng trong database
+            while(c1.moveToNext())
+            {
+                // lấy ra các thông tin của ảnh
+                int id = c1.getInt(0);
+                int idDelete =  c1.getInt(1);
+                int hourRemain =  c1.getInt(2);
+                String dateTaken = c1.getString(3);
+                String linkImage = c1.getString(4);
+
+                // tạo imageModel với các thông tin trên và setExif
+                imageModel imgModel = new imageModel(id, dateTaken, Uri.parse(linkImage));
+                imgModel.setDeleteId(idDelete);
+                imgModel.setDeleteTimeRemain(hourRemain);
+                imgModel.setExif(Uri.parse(linkImage),linkImage,MainActivity.this);
+
+                // add imageModel vừa tạo vào mảng Trash
+                imageListTrash.add(imgModel);
+            }
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    // thêm 1 ảnh vào database Trash
+    public void insertDataToTableTrash(int id, int idDelete, String dateTaken, String linkImage)
+    {
+        try
+        {
+            String sqlQuery="insert into \"trash\""
+                    + "(id, idDelete, hourRemain, dateTaken, link) values ("
+                    + id + "," + idDelete + ",24,'" + dateTaken + "','" + linkImage + "');";
+            dbTrash.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateIdInTableTrash(int oldId, int newId)
+    {
+        try
+        {
+            String sqlQuery="UPDATE \"trash\" SET id=" + newId + " WHERE id=" + oldId + ";";
+            dbTrash.execSQL(sqlQuery);
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+
+    // lên lịch xóa ảnh tự động sau 24h
+    private void scheduleDelete(int jobId, int imageId, String imageLink) {
+        JobInfo.Builder builder = new JobInfo.Builder(jobId, new ComponentName(this, AutoDeleteService.class))
+                .setMinimumLatency(24 * 60 * 60 * 1000) // 24 giờ
+//                .setMinimumLatency(24 * 1000)
+                .setPersisted(true);
+
+        // truyền thông tin vào
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putInt("imageId", imageId);
+        bundle.putString("imageLink", imageLink);
+        builder.setExtras(bundle);
+
+        // đặt lịch
+        deleteScheduler.schedule(builder.build());
+    }
+
+    // đặt lịch đếm số giờ còn lại của ảnh trong Trash
+    private void scheduleCountTime(int jobId, int imageId) {
+        // Tạo Data để truyền tham số
+        Data imageData = new Data.Builder()
+                .putInt("deleteId",jobId)
+                .putInt("nRemain", 24) // khởi tạo là 24h
+                .putInt("imageId", imageId)
+                .build();
+
+        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(AutoCountTime.class)
+                .setInputData(imageData)
+                .addTag(String.valueOf(jobId))
+                .build();
+
+        WorkManager.getInstance(getApplicationContext()).enqueue(workRequest);
+    }
+
+    // cancel lịch tự động xóa ảnh sau 24h
+    private void cancelDelete(int jobId) {
+        deleteScheduler.cancel(jobId);
+    }
+
+    // cancel lịch đếm số giờ còn lại của ảnh trong Trash
+    private void cancelCountTime(int jobId) {
+        WorkManager.getInstance(this).cancelAllWorkByTag(String.valueOf(jobId));
+    }
 }

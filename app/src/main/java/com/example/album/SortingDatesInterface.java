@@ -1,5 +1,7 @@
 package com.example.album;
 
+import android.widget.Toast;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -36,16 +38,26 @@ public interface SortingDatesInterface {
         //Tạo dateFormat
         private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
 
-        //Hàm so sánh
-        //date1 > date2: trả về 1
-        //date1 <= date2: trả về 0
+
         @Override
         public int compare(String date1, String date2) {
-            try {
-                return dateFormat.parse(date2).compareTo(dateFormat.parse(date1));
-            } catch (ParseException e) {
-                e.printStackTrace(); // Handle parsing exception as needed
+            //===================================== TRUC ADD THIS ======================================
+            // Kiểm tra null vì nếu date là null thì bị crash về sau
+            if (date1 == null && date2 == null) {
                 return 0;
+            } else if (date1 == null) {
+                return 1;
+            } else if (date2 == null) {
+                return -1;
+            }
+            //==========================================================================================
+            else {
+                try {
+                    return dateFormat.parse(date2).compareTo(dateFormat.parse(date1));
+                } catch (ParseException e) {
+                    e.printStackTrace(); // Handle parsing exception as needed
+                    return 0;
+                }
             }
         }
     }
