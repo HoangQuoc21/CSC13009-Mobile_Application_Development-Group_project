@@ -21,7 +21,20 @@
             android:src="@mipmap/ic_launcher"
             android:id="@+id/imageView"/>
 
+        <FrameLayout
+            android:id="@+id/frameTimeRemain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="#80000000">
 
+            <TextView
+                android:id="@+id/txtTimeRemain"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Time remaining"
+                android:layout_gravity="center"
+                android:textColor="#FFFFFF" />
+        </FrameLayout>
     </androidx.cardview.widget.CardView>
-
 </LinearLayout>

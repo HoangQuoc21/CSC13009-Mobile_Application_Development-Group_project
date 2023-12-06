@@ -66,7 +66,7 @@ public class ImageActivity extends AppCompatActivity {
     ListView listViewAlbum;
     Uri imageUri;
     String nameAlbumToAdd="";
-
+    int imageId;
     String imagePath;
     ArrayList<String>listNameAlbum= new ArrayList<>();
 
@@ -78,6 +78,19 @@ public class ImageActivity extends AppCompatActivity {
             {
                 listNameAlbum=intent.getStringArrayListExtra("listAlbum");
             }
+
+            //===========================ADD BY TRUC ===========================
+            // lắng nghe broadcast tự động xóa sau 24h. Nếu ảnh người dùng đang xem
+            // là ảnh đang được tự động xóa thì tự thoát khỏi ImageActivity
+            if ("autoDeleteTrash".equals(intent.getAction()))
+            {
+                int imageIdDelete = intent.getIntExtra("imageId", -1);
+                if(imageIdDelete == imageId)
+                {
+                    finish();
+                }
+            }
+            //====================================================================
         }
     };
 
@@ -93,6 +106,8 @@ public class ImageActivity extends AppCompatActivity {
 
         //Lấy bundle ra khỏi intent
         Bundle myBundle = myIntent.getBundleExtra("package");
+        // id ảnh
+        imageId = myBundle.getInt("imageId");
         // link ảnh
         imagePath = myBundle.getString("imageLink");
         // dateTaken của ảnh
@@ -289,7 +304,11 @@ public class ImageActivity extends AppCompatActivity {
         }
         // Broadcast của click delete Album
         IntentFilter filter = new IntentFilter("listAlbumSender");
+        // Broadcast của auto delete trash sau 24h
+        IntentFilter filter_autoDeleteTrash = new IntentFilter("autoDeleteTrash");
+
         registerReceiver(receiver, filter);
+        registerReceiver(receiver, filter_autoDeleteTrash);
     }
 
 
