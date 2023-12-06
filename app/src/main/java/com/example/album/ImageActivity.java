@@ -318,9 +318,15 @@ public class ImageActivity extends AppCompatActivity {
 
         scaleGestureDetector.onTouchEvent(event);
 
+        MoveImage(event);
 
-        // Xử lý di chuyển ảnh
-        // Xử lý này để sau khi Zoom thì ta có thể kéo chuột để xem ảnh
+        return super.onTouchEvent(event);
+    }
+
+    public void MoveImage(MotionEvent event)
+    {
+//         Xử lý di chuyển ảnh
+//         Xử lý này để sau khi Zoom thì ta có thể kéo chuột để xem ảnh
 
         // Lưu giá trị tọa độ chuột hiện tại vào lastX và lastY
         float currentX = event.getX();
@@ -337,7 +343,6 @@ public class ImageActivity extends AppCompatActivity {
         lastX = currentX;
         lastY = currentY;
 
-        return super.onTouchEvent(event);
     }
 
     // Xử lý Scale ảnh
