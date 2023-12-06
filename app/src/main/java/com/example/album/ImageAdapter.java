@@ -54,9 +54,14 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.viewHolder> 
         });
     }
 
+
     @Override
     public int getItemCount() {
-        return list.size();
+        //Quoc fix this
+        if (list != null)
+            return list.size();
+        else
+            return 0;
     }
 
     public class viewHolder extends RecyclerView.ViewHolder

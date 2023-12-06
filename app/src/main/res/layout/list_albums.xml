@@ -6,20 +6,23 @@
     android:paddingStart="2dp"
     android:paddingEnd="2dp"
     android:paddingTop="4dp"
-    android:paddingBottom="4dp">
+    android:paddingBottom="4dp"
+    android:background="@drawable/bg_add_album_border_gray"
+    >
+
     <ImageView
         android:id="@+id/iconImageView"
-        android:layout_width="wrap_content"
+        android:layout_width="138dp"
         android:layout_height="match_parent"
         android:contentDescription="Folder Icon"
-        android:src="@android:drawable/ic_menu_gallery" />
+        android:src="@drawable/img" />
 
     <TextView
         android:id="@+id/txtNameAlbum"
-        android:layout_width="wrap_content"
+        android:layout_width="263dp"
         android:layout_height="wrap_content"
-        android:text="Mô tả hoặc tiêu đề"
+        android:gravity="center"
         android:padding="16dp"
-        android:gravity="center"/>
+        android:text="Tên album" />
 
 </LinearLayout>
