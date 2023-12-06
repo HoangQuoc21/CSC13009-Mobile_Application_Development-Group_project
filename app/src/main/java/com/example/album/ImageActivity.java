@@ -69,7 +69,8 @@ public class ImageActivity extends AppCompatActivity {
 
     //Khai báo ImageView
     ImageView imageView;
-    imageModel croppedImage;
+    // Dùng để lưu ảnh mới sau khi chỉnh sửa từ ảnh gốc trong hoạt động này
+    imageModel editedImage;
 
     //Khai báo ScaleGestureDetector dùng để scale ảnh (Zoom in, Zoom out)
     private ScaleGestureDetector scaleGestureDetector;
@@ -581,6 +582,7 @@ public class ImageActivity extends AppCompatActivity {
         // Ứng với request code == 100 khi start editIntent (btnEdit.onClick)
         if (requestCode == 100 && resultCode == 101) {
 
+            // Nhận kết quả ảnh từ hoạt động ImageCropper
             String result = data.getStringExtra("Crop");
             Uri resultUri = null;
 
@@ -588,44 +590,54 @@ public class ImageActivity extends AppCompatActivity {
 
             if (result != null) {
                 resultUri = Uri.parse(result);
+
+                // Lưu ảnh
                 saveImage(resultUri);
-            }
 
-            try {
-                Bitmap bmEditedImage = BitmapFactory.decodeStream(
-                        getContentResolver().openInputStream(resultUri));
-                if (bmEditedImage != null) {
+                try {
+                    Bitmap bmEditedImage = BitmapFactory.decodeStream(
+                            getContentResolver().openInputStream(resultUri));
+                    if (bmEditedImage != null) {
 
-                    // Tạo một ImageActivity mới để hiển thị ảnh vừa chỉnh
-                    String dateTaken = croppedImage.getDateTaken();
-                    Bundle mybundle = new Bundle();
-                    mybundle.putString("imageLink", result);
-                    mybundle.putString("imageDate", dateTaken);
-                    mybundle.putString("imageIndex", String.valueOf(croppedImage.getId()));
-                    mybundle.putString("footer", "1");
+                        // Tạo một ImageActivity mới để hiển thị ảnh vừa chỉnh
+                        String dateTaken = editedImage.getDateTaken();
+                        Bundle mybundle = new Bundle();
+                        mybundle.putString("imageLink", result);
+                        mybundle.putString("imageDate", dateTaken);
+                        mybundle.putString("imageIndex", String.valueOf(editedImage.getId()));
+                        mybundle.putString("footer", "1");
 
-                    Intent intent = new Intent(this, ImageActivity.class);
-                    intent.putExtra("package", mybundle);
-                    startActivity(intent);
+                        Intent intent = new Intent(this, ImageActivity.class);
+                        intent.putExtra("package", mybundle);
+                        startActivity(intent);
+                    }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
                 }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             }
         }
     }
 
     public void saveImage(Uri uri) {
+        //*** Tạo bitmap và nén nó rồi lưu xuống bộ nhớ bằng file stream
+        // Sau khi lưu thì tạo một image Model để truyền vào và bắt đầu một hoạt động xem ảnh vừa chỉnh sửa
         try {
             InputStream inputStream = getContentResolver().openInputStream(uri);
             Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
 
+            // Tạo tên cho ảnh mới là chuỗi kí tự ngày, giờ chụp chính xác đến milisecond
             SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
             Date now = new Date();
             String fileName = formatter.format(now) + "_cropped" + ".jpg";
+
+            // Tạo đường dẫn để lưu ảnh
+            // Tạo thư mục có tên Album app trong thư mục Pictures của bộ nhớ điện thoại
             File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "AlbumApp");
             if (!directory.exists()) {
                 directory.mkdirs();
             }
+
+            // Tạo file output stream và nén bitmap rồi lưu
             File file = new File(directory, fileName);
             OutputStream outputStream = new FileOutputStream(file);
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
@@ -633,7 +645,8 @@ public class ImageActivity extends AppCompatActivity {
             outputStream.close();
             MediaScannerConnection.scanFile(this, new String[]{file.getPath()}, new String[]{"image/jpeg"}, null);
 
-            croppedImage = new imageModel(0, formatter.toString(), uri);
+            // Khởi tạo ảnh để truyền vào và bắt đầu một hoạt động xem ảnh vừa chỉnh sửa
+            editedImage = new imageModel(0, formatter.toString(), uri);
 
         } catch (IOException e) {
             e.printStackTrace();

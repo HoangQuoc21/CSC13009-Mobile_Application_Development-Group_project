@@ -50,6 +50,7 @@ public class ImageCropper extends AppCompatActivity {
         } else if (resultCode == UCrop.RESULT_ERROR) {
             final Throwable cropError = UCrop.getError(data);
         } else {
+            // Nếu hủy chỉnh sửa thì finish hoạt động này
             finish();
         }
     }

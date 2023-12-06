@@ -454,7 +454,12 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
     @Override
     protected void onResume() {
         super.onResume();
+        // Nếu đã được cấp quyền đọc bộ nhớ thì mới đọc ảnh
+        // từ bộ nhớ ngoài
         if (isPermissionGranted) {
+
+            // Cần clear hai biến này của DateAdapter trước khi đọc
+            // danh sách ảnh từ bộ nhớ ngoài để tránh sự trùng lặp ảnh
             imagesByDate.clear();
             dates.clear();
             ReadSdcard(MainActivity.this);
@@ -478,6 +483,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 MediaStore.Images.Media.DATE_TAKEN
         };
 
+        // Sắp xếp danh sách Uri ảnh theo thứ tự ngày taken giảm dần
         String orderBy = MediaStore.Images.ImageColumns.DATE_TAKEN + " DESC";
 
         try(Cursor cursor = MainActivity.this.getContentResolver().query(
