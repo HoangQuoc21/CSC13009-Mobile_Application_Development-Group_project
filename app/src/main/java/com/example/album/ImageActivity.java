@@ -614,42 +614,7 @@ public class ImageActivity extends AppCompatActivity {
         }
     }
 
-//    public void saveImage(Bitmap bitmap, String title) {
-//        String description = "edited image";
-//        String savedImageURL = MediaStore.Images.Media.insertImage(
-//                getContentResolver(),
-//                bitmap,
-//                title,
-//                description
-//        );
-//        Toast.makeText(ImageActivity.this, "Saved image", Toast.LENGTH_SHORT).show();
-//    }
-
     public void saveImage(Uri uri) {
-//        try {
-//            InputStream inputStream = getContentResolver().openInputStream(uri);
-//            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-//
-//            String title = "My Image";
-//            String description = "My image description";
-//            ContentValues values = new ContentValues();
-//
-//            values.put(MediaStore.Images.Media.DISPLAY_NAME, title);
-//            values.put(MediaStore.Images.Media.DESCRIPTION, description);
-//            values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
-//
-//            Uri imageUri = this.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-//            OutputStream outputStream = getContentResolver().openOutputStream(imageUri);
-//
-//            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-//            outputStream.close();
-//
-//            Toast.makeText(ImageActivity.this, "Saved image", Toast.LENGTH_SHORT).show();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            Toast.makeText(ImageActivity.this, "Error image", Toast.LENGTH_SHORT).show();
-//        }
-
         try {
             InputStream inputStream = getContentResolver().openInputStream(uri);
             Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
@@ -673,6 +638,5 @@ public class ImageActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 }
