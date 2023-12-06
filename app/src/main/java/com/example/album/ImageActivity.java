@@ -612,8 +612,6 @@ public class ImageActivity extends AppCompatActivity {
         // Ứng với request code == 100 khi start editIntent (btnEdit.onClick)
         if (requestCode == 100 && resultCode == 101) {
 
-            // Lấy kết quả trả về và parse nó sang Uri để ghi
-            // vào imageView, thay cho image cũ
             String result = data.getStringExtra("Crop");
             Uri resultUri = null;
 
@@ -629,7 +627,7 @@ public class ImageActivity extends AppCompatActivity {
                         getContentResolver().openInputStream(resultUri));
                 if (bmEditedImage != null) {
 
-                    // Tạo một ImageActivity mới để hiển thị ảnh vừa cắt
+                    // Tạo một ImageActivity mới để hiển thị ảnh vừa chỉnh
                     String dateTaken = croppedImage.getDateTaken();
                     Bundle mybundle = new Bundle();
                     mybundle.putString("imageLink", result);
@@ -640,16 +638,10 @@ public class ImageActivity extends AppCompatActivity {
                     Intent intent = new Intent(this, ImageActivity.class);
                     intent.putExtra("package", mybundle);
                     startActivity(intent);
-                    //Xử lý scale ảnh (Zoom in, Zoom out);
-                    //scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
-                }
-                else {
-                    //thông báo để kiểm tra
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
-        }else {
         }
     }
 

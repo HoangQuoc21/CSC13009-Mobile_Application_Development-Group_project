@@ -381,7 +381,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Refresh danh sach anh
-
     @Override
     protected void onResume() {
         super.onResume();
