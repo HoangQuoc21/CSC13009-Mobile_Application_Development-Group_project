@@ -292,6 +292,7 @@ public class ImageActivity extends AppCompatActivity {
                 //Xử lý scale ảnh (Zoom in, Zoom out);
                 scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
 
+
                 //thông báo để kiểm tra
                 //Toast.makeText(this, " Đọc được ảnh từ đường dẫn", Toast.LENGTH_SHORT).show();
             }
@@ -311,42 +312,53 @@ public class ImageActivity extends AppCompatActivity {
         registerReceiver(receiver, filter_autoDeleteTrash);
     }
 
+    private boolean isZooming = false;
 
     //Xử lý event chạm vào ảnh (Move)
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
-        scaleGestureDetector.onTouchEvent(event);
 
-        MoveImage(event);
+        boolean check = scaleGestureDetector.onTouchEvent(event);
 
+        if (!isZooming) {
+            float currentX = event.getX();
+            float currentY = event.getY();
+
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    lastX = currentX;
+                    lastY = currentY;
+                    break;
+
+                case MotionEvent.ACTION_MOVE:
+                    float deltaX = currentX - lastX;
+                    float deltaY = currentY - lastY;
+                    imageView.scrollBy((int) -deltaX, (int) -deltaY);
+                    break;
+            }
+
+            lastX = currentX;
+            lastY = currentY;
+        }
         return super.onTouchEvent(event);
     }
 
-    public void MoveImage(MotionEvent event)
-    {
-//         Xử lý di chuyển ảnh
-//         Xử lý này để sau khi Zoom thì ta có thể kéo chuột để xem ảnh
 
-        // Lưu giá trị tọa độ chuột hiện tại vào lastX và lastY
-        float currentX = event.getX();
-        float currentY = event.getY();
-
-        // Xử lý sự kiện kéo chuột
-        if (event.getAction() == MotionEvent.ACTION_MOVE) {
-            float deltaX = currentX - lastX;
-            float deltaY = currentY - lastY;
-            imageView.scrollBy((int) -deltaX, (int) -deltaY);
-        }
-
-        // Cập nhật lastX và lastY cho sự kiện tiếp theo
-        lastX = currentX;
-        lastY = currentY;
-
-    }
 
     // Xử lý Scale ảnh
     class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+
+        @Override
+        public boolean onScaleBegin(ScaleGestureDetector detector) {
+            isZooming = true;
+            return true;
+        }
+
+        @Override
+        public void onScaleEnd(ScaleGestureDetector detector) {
+            isZooming = false;
+        }
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
             // Lấy độ Zoom
