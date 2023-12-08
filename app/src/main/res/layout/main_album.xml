@@ -14,7 +14,7 @@
         android:layout_marginTop="20px"/>
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="124px"
         android:orientation="horizontal"
         android:background="@drawable/custom_button">
 
@@ -27,7 +27,9 @@
         <ImageButton
             android:id="@+id/btnAlbumAdd"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="90px"
+            android:scaleType="fitCenter"
+            android:layout_gravity="center_vertical"
             android:layout_weight="1"
             android:src="@drawable/icon_add_album"
             android:background="@drawable/custom_button"
