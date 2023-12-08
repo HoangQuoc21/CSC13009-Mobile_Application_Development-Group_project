@@ -9,8 +9,6 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!--    <uses-implied-permission  android:name="android.permission.READ_EXTERNAL_STORAGE", "requested WRITE_EXTERNAL_STORAGE"/>-->
-
     <application
 
         android:allowBackup="true"
@@ -22,9 +20,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Album"
         tools:targetApi="31">
-        <service
-            android:name=".AutoCountTimeService"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
+
         <service
             android:name=".AutoDeleteService"
             android:permission="android.permission.BIND_JOB_SERVICE" />

@@ -617,7 +617,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 {
                     if(imageListTrash.get(k).getPath().equals(contentUri))
                     {
-                        // update id của ảnh đó trong database và mảng Trash vì lỡ người dùng
+                        // update id của ảnh đó trong database Trash và mảng Trash vì lỡ người dùng
                         // vừa thêm xóa ảnh trong thiết bị, dẫn đến id cũ không còn đúng
                         updateIdInTableTrash(imageListTrash.get(k).getId(), i);
                         imageListTrash.get(k).setId(i);
@@ -796,6 +796,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 {
                     if(imageListTrash.get(i).getId() == imageId)
                     {
+                        // xóa ảnh trong mảng Trash
                         imageListTrash.remove(imageListTrash.get(i));
                         adapterTrash.notifyDataSetChanged();
                         break;
@@ -813,7 +814,9 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 {
                     if(imageListTrash.get(i).getId() == imageId)
                     {
+                        // cập nhật thuộc tính deleteTimeRemain của ảnh
                         imageListTrash.get(i).setDeleteTimeRemain(timeRemain);
+                        // cập nhật sự thay đổi này lên giao diện (TextView)
                         adapterTrash.notifyItemChanged(i);
                         break;
                     }
@@ -1436,6 +1439,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         }
     }
 
+    // cập nhật id của ảnh trong Trash trong lần bật app này
     public void updateIdInTableTrash(int oldId, int newId)
     {
         try
@@ -1450,7 +1454,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
     }
 
 
-    // lên lịch xóa ảnh tự động sau 24h
+    // đặt lịch xóa ảnh tự động sau 24h
     private void scheduleDelete(int jobId, int imageId, String imageLink) {
         JobInfo.Builder builder = new JobInfo.Builder(jobId, new ComponentName(this, AutoDeleteService.class))
                 .setMinimumLatency(24 * 60 * 60 * 1000) // 24 giờ
