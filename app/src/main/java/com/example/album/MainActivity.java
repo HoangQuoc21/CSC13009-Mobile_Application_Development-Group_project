@@ -560,20 +560,22 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         unregisterReceiver(receiver);
     }
 
-    //===================================== TRUC ADD THIS ======================================
-    // hành động thực hiện khi người dùng đồng ý cấp quyền
+    // Refresh danh sach anh
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 1002) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // đọc ảnh từ thiết bị
-                ReadSdcard(MainActivity.this);
-            } else {
-            }
-        }
+    protected void onResume() {
+        super.onResume();
+        // Nếu đã được cấp quyền đọc bộ nhớ thì mới đọc ảnh
+        // từ bộ nhớ ngoài
+
+
+        // Cần clear hai biến này của DateAdapter trước khi đọc
+        // danh sách ảnh từ bộ nhớ ngoài để tránh sự trùng lặp ảnh
+        imagesByDate.clear();
+        dates.clear();
+        ReadSdcard(MainActivity.this);
+
     }
-    //==========================================================================================
+
 
     // Tải dữ liệu ảnh URI trong bộ nhớ
     private void ReadSdcard(Context context){
@@ -591,14 +593,15 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 MediaStore.Images.Media.DATE_TAKEN,
         };
 
-//        String sortOrder = MediaStore.Images.Media.DATE_TAKEN + " DESC";
+        // Sắp xếp danh sách Uri ảnh theo thứ tự ngày taken giảm dần
+        String orderBy = MediaStore.Images.ImageColumns.DATE_TAKEN + " DESC";
 
         try(Cursor cursor = MainActivity.this.getContentResolver().query(
                 collection,
                 projection,
                 null,
-                null
-//                ,sortOrder
+                null,
+                orderBy
         )){
             int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
             int dateTakenColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);

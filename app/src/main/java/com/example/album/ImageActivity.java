@@ -1,10 +1,15 @@
 package com.example.album;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 
 import android.app.Dialog;
+import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -13,8 +18,11 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.media.ExifInterface;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -31,11 +39,18 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.yalantis.ucrop.UCrop;
+
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 public class ImageActivity extends AppCompatActivity {
     View frame;
@@ -49,9 +64,13 @@ public class ImageActivity extends AppCompatActivity {
 
     // Button ở footer của image trong Trash
     Button btnDeleteTrash, btnRestore;
+    // Edit button
+    Button btnEdit;
 
     //Khai báo ImageView
     ImageView imageView;
+    // Dùng để lưu ảnh mới sau khi chỉnh sửa từ ảnh gốc trong hoạt động này
+    imageModel editedImage;
 
     //Khai báo ScaleGestureDetector dùng để scale ảnh (Zoom in, Zoom out)
     private ScaleGestureDetector scaleGestureDetector;
@@ -118,7 +137,6 @@ public class ImageActivity extends AppCompatActivity {
         // dùng để dán layout footer đúng với với ảnh bình thường hoặc ảnh trong Trash
         String footerLayout = myBundle.getString("footer");
 
-
         // khi là ảnh bình thường
         if(footerLayout.equals("1"))
         {
@@ -134,6 +152,7 @@ public class ImageActivity extends AppCompatActivity {
             btnAddAlbum = (Button) findViewById(R.id.btnAddAlbum);
             btnAddFavorite = (Button) findViewById(R.id.btnAddFavorite);
             btnDelete = (Button) findViewById(R.id.btnDelete);
+            btnEdit = (Button) findViewById(R.id.btnEdit);
             btnInfo = (Button) findViewById(R.id.btnInfo);
             btnDeleteInAlbum=(Button) findViewById(R.id.btnDeleteInAlbum);
 
@@ -180,6 +199,19 @@ public class ImageActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     openDialogDelete(imageDate,imageIndex,imagePath);
+                }
+            });
+
+            // Xử lý nút edit
+            btnEdit.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //Toast.makeText(ImageActivity.this, "Edit", Toast.LENGTH_SHORT).show();
+                    // Tạo intent, truyền imagePath và start activity image cropper với mong muốn
+                    // nhận được kết quả là một imagePath của ảnh sau khi thực hiện chỉnh sửa
+                    Intent editIntent = new Intent(ImageActivity.this, ImageCropper.class);
+                    editIntent.putExtra("SendImageData", imagePath);
+                    startActivityForResult(editIntent, 100);
                 }
             });
 
@@ -576,5 +608,84 @@ public class ImageActivity extends AppCompatActivity {
 
         // gọi lệnh Show để hiện Dialog
         dialog.show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Ảnh sau khi cắt xong sẽ trả về result code == 101
+        // Ứng với request code == 100 khi start editIntent (btnEdit.onClick)
+        if (requestCode == 100 && resultCode == 101) {
+
+            // Nhận kết quả ảnh từ hoạt động ImageCropper
+            String result = data.getStringExtra("Crop");
+            Uri resultUri = null;
+
+            Bitmap bitmap = null;
+
+            if (result != null) {
+                resultUri = Uri.parse(result);
+
+                // Lưu ảnh
+                saveImage(resultUri);
+
+                try {
+                    Bitmap bmEditedImage = BitmapFactory.decodeStream(
+                            getContentResolver().openInputStream(resultUri));
+                    if (bmEditedImage != null) {
+
+                        // Tạo một ImageActivity mới để hiển thị ảnh vừa chỉnh
+                        String dateTaken = editedImage.getDateTaken();
+                        Bundle mybundle = new Bundle();
+                        mybundle.putString("imageLink", result);
+                        mybundle.putString("imageDate", dateTaken);
+                        mybundle.putString("imageIndex", String.valueOf(editedImage.getId()));
+                        mybundle.putString("footer", "1");
+
+                        Intent intent = new Intent(this, ImageActivity.class);
+                        intent.putExtra("package", mybundle);
+                        startActivity(intent);
+                    }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public void saveImage(Uri uri) {
+        //*** Tạo bitmap và nén nó rồi lưu xuống bộ nhớ bằng file stream
+        // Sau khi lưu thì tạo một image Model để truyền vào và bắt đầu một hoạt động xem ảnh vừa chỉnh sửa
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+
+            // Tạo tên cho ảnh mới là chuỗi kí tự ngày, giờ chụp chính xác đến milisecond
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+            Date now = new Date();
+            String fileName = formatter.format(now) + "_cropped" + ".jpg";
+
+            // Tạo đường dẫn để lưu ảnh
+            // Tạo thư mục có tên Album app trong thư mục Pictures của bộ nhớ điện thoại
+            File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "AlbumApp");
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+
+            // Tạo file output stream và nén bitmap rồi lưu
+            File file = new File(directory, fileName);
+            OutputStream outputStream = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+            outputStream.flush();
+            outputStream.close();
+            MediaScannerConnection.scanFile(this, new String[]{file.getPath()}, new String[]{"image/jpeg"}, null);
+
+            // Khởi tạo ảnh để truyền vào và bắt đầu một hoạt động xem ảnh vừa chỉnh sửa
+            editedImage = new imageModel(0, formatter.toString(), uri);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

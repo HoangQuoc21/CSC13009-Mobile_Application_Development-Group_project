@@ -25,6 +25,9 @@
             android:name=".AutoDeleteService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
         <activity
+            android:name=".ImageCropper"
+            android:exported="false" />
+        <activity
             android:name=".Current_Album"
             android:exported="false" />
         <activity
@@ -39,5 +42,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
     </application>
 </manifest>

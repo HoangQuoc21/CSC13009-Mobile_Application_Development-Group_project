@@ -78,6 +78,7 @@ public class Current_Album extends AppCompatActivity {
                 }
             }
         }
+
         txtcurrentAlbum.setText(name);
         recyclerViewAlbum = findViewById(R.id.recyclerViewAlbum);
         layoutManagerAlbum = new GridLayoutManager(this, 3);

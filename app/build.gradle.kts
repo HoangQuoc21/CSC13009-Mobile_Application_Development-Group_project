@@ -47,4 +47,6 @@ dependencies {
 
 
     implementation("com.karumi:dexter:6.2.3")
+
+    implementation ("com.github.yalantis:ucrop:2.2.6-native")
 }
