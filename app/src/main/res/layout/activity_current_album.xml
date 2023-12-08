@@ -12,37 +12,31 @@
         android:layout_height="124px"
         android:orientation="horizontal"
         android:background="@drawable/custom_button">
-        <Button
+
+        <ImageButton
             android:id="@+id/btnCurrentAlbumBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="◀"
-            android:textAlignment="textStart"
-            android:textColor="#FFFFFF"
+            android:layout_width="50dp"
+            android:layout_height="match_parent"
             android:background="@drawable/custom_button"
-            app:backgroundTint="@null"/>
+            android:src="@drawable/icon_back"
+            app:backgroundTint="@null" />
+
         <TextView
             android:id="@+id/txtNameCurrentAlbum"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="228dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="Demo"
-            android:textStyle="bold"
-            android:textSize="17dp"
+            android:background="@drawable/custom_button"
             android:gravity="center"
+            android:text="Demo"
             android:textColor="#FFFFFF"
-            android:background="@drawable/custom_button"
-            app:backgroundTint="@null"/>
-        <Button
-            android:id="@+id/btntemp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text=""
-            android:textColor="#FFFFFF"
-            android:background="@drawable/custom_button"
-            app:backgroundTint="@null"/>
+            android:textSize="17dp"
+            android:textStyle="bold"
+            app:backgroundTint="@null" />
+        <TextView
+            android:layout_width="50dp"
+            android:layout_height="match_parent"/>
+
     </LinearLayout>
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewAlbum"

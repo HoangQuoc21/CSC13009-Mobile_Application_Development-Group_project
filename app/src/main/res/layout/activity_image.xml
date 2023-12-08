@@ -15,15 +15,13 @@
         android:background="@drawable/custom_button"
         app:backgroundTint="@null">
 
-        <Button
+        <ImageButton
             android:id="@+id/btnBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="◀"
-            android:textAlignment="textStart"
-            android:textColor="#FFFFFF"
+            android:layout_width="57dp"
+            android:layout_height="match_parent"
             android:background="@drawable/custom_button"
-            app:backgroundTint="@null"/>
+            android:src="@drawable/icon_back"
+            app:backgroundTint="@null" />
 
     </LinearLayout>
 
@@ -40,6 +38,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:adjustViewBounds="true"
+            android:contentDescription="Come back to the previous view"
             android:src="@mipmap/ic_launcher" />
 
     </LinearLayout>

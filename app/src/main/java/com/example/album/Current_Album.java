@@ -13,6 +13,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -31,7 +32,7 @@ import java.util.ArrayList;
 
 public class Current_Album extends AppCompatActivity {
     TextView txtcurrentAlbum;
-    Button btnBack;
+    ImageButton btnBack;
     ImageButton btnDelete;
     RecyclerView recyclerViewAlbum;
 

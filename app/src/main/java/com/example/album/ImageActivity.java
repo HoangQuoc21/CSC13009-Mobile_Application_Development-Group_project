@@ -59,7 +59,7 @@ public class ImageActivity extends AppCompatActivity {
     private static final int REQUEST_WRITE_STORAGE = 112;
 
     // Button Back ở header
-    Button btnBack;
+    ImageButton btnBack;
 
     // Button ở footer của image bình thường
     ImageButton btnAddAlbum,btnAddFavorite, btnDelete,btnEdit, btnInfo,btnDeleteInAlbum;
@@ -304,7 +304,7 @@ public class ImageActivity extends AppCompatActivity {
 
 
         //Nút Back để trở về Activity chính.
-        btnBack = (Button) findViewById(R.id.btnBack);
+        btnBack = (ImageButton) findViewById(R.id.btnBack);
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
