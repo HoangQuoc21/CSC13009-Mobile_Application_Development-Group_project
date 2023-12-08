@@ -28,7 +28,7 @@
             android:textSize="14sp"
             android:textColor="@color/black"
             android:gravity="center"
-            android:text="Please Input Name Of Album"/>
+            android:text="Input The Name Of Adding Album:"/>
         <EditText
             android:id="@+id/edtDialogNameAlbum"
             android:layout_width="match_parent"
@@ -47,7 +47,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Back"
+                android:text="Cancel"
                 android:layout_marginEnd="10dp"
                 android:textSize="14sp"
                 android:background="@drawable/custom_button_border"

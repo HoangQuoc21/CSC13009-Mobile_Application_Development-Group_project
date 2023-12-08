@@ -59,13 +59,12 @@
         android:orientation="horizontal"
         android:background="@drawable/custom_button">
 
-        <Button
+        <ImageButton
             android:id="@+id/btnCurrentAlbumDelete"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Delete"
-            android:textColor="#FFFFFF"
+            android:src="@drawable/icon_delete_album"
             android:background="@drawable/custom_button"
             app:backgroundTint="@null"/>
     </LinearLayout>

@@ -12,10 +12,10 @@
 
     <ImageView
         android:id="@+id/iconImageView"
-        android:layout_width="138dp"
+        android:layout_width="88dp"
         android:layout_height="match_parent"
         android:contentDescription="Folder Icon"
-        android:src="@drawable/img" />
+        android:src="@drawable/album_image" />
 
     <TextView
         android:id="@+id/txtNameAlbum"
@@ -23,6 +23,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:padding="16dp"
+        android:layout_marginRight="10dp"
         android:text="Tên album" />
 
 </LinearLayout>

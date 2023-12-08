@@ -24,13 +24,12 @@
             android:layout_weight="2">
         </FrameLayout>>
 
-        <Button
+        <ImageButton
             android:id="@+id/btnAlbumAdd"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Add"
-            android:textColor="#FFFFFF"
+            android:src="@drawable/icon_add_album"
             android:background="@drawable/custom_button"
             app:backgroundTint="@null"/>
     </LinearLayout>

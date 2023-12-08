@@ -55,6 +55,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.Spinner;
@@ -454,8 +455,8 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                     }
                 });
 
-                 Button btnAddAlbum;
-                 btnAddAlbum= (Button) findViewById(R.id.btnAlbumAdd);
+                 ImageButton btnAddAlbum;
+                 btnAddAlbum= (ImageButton) findViewById(R.id.btnAlbumAdd);
                  btnAddAlbum.setOnClickListener(new View.OnClickListener() {
                      @Override
                      public void onClick(View v) {
@@ -835,11 +836,11 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 getListFromTable(dbAlbum,listLinkAlbum,"Favorite");
                 if(isValueExists(dbAlbum,"Favorite",linkImage))
                 {
-                    Toast.makeText(context, "Image was exist in this album", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Image existed in Favorite", Toast.LENGTH_SHORT).show();
                 }
                 else
                 {
-                    Toast.makeText(context, "Adding image to Favorite Album was successful", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Successfully added image to Favorite", Toast.LENGTH_SHORT).show();
 
                     insertDataToTable(dbAlbum,"Favorite",linkImage);
                 }
@@ -945,14 +946,14 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 if(textName.equals(""))
                 {
                     //Trường họp người dùng không nhập tên
-                    Toast.makeText(MainActivity.this, "PLease Input Name", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Input a name", Toast.LENGTH_SHORT).show();
                 }
                 else
                 {
                     if(listNameAlbum.contains(textName))
                     {
                         // trường hợp người dùng nhập tên trùng với tên album đã tồn tại
-                        Toast.makeText(MainActivity.this, "Name Album was Exist", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "An album with this name existed", Toast.LENGTH_SHORT).show();
                     }
                     else
                     {
@@ -960,7 +961,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                         listAlbum.add(new Album(textName));
                         insertDataToTable(dbAlbum,"listNameTable",textName);
                         CreateTable(dbAlbum,textName);
-                        Toast.makeText(MainActivity.this, "Add Album was successful", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "Successfully added an album", Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
                     }
                     albumAdapter.notifyDataSetChanged();

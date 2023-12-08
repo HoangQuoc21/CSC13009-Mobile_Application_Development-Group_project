@@ -13,63 +13,63 @@
         android:orientation="horizontal"
         android:background="@drawable/custom_button">
 
-        <Button
+        <ImageButton
             android:id="@+id/btnAddAlbum"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="Add Album"
-            android:textColor="#FFFFFF"
+            android:src="@drawable/icon_add_image_to_album"
+            android:contentDescription="Add an image to an album"
             android:background="@drawable/custom_button"
             app:backgroundTint="@null"/>
 
-        <Button
+        <ImageButton
             android:id="@+id/btnAddFavorite"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="💓"
-            android:textColor="#FFFFFF"
+            android:src="@drawable/icon_favorite"
+            android:contentDescription="Add an image to favorite album"
             android:background="@drawable/custom_button"
             app:backgroundTint="@null"/>
 
-        <Button
+        <ImageButton
             android:id="@+id/btnDelete"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="Delete"
-            android:textColor="#FFFFFF"
+            android:src="@drawable/icon_delete_image_in_album"
+            android:contentDescription="Delete the image"
             android:background="@drawable/custom_button"
             app:backgroundTint="@null"/>
 
-        <Button
+        <ImageButton
             android:id="@+id/btnEdit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="Edit"
-            android:textColor="#FFFFFF"
+            android:src="@drawable/icon_edit"
+            android:contentDescription="Edit the image"
             android:background="@drawable/custom_button"
             app:backgroundTint="@null"/>
 
-        <Button
+        <ImageButton
             android:id="@+id/btnDeleteInAlbum"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="Delete in album"
-            android:textColor="#FFFFFF"
+            android:src="@drawable/icon_delete_in_album"
+            android:contentDescription="Delete the image from the current album"
             android:background="@drawable/custom_button"
             app:backgroundTint="@null"/>
 
-        <Button
+        <ImageButton
             android:id="@+id/btnInfo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="Info"
-            android:textColor="#FFFFFF"
+            android:src="@drawable/icon_information"
+            android:contentDescription="Delete the image from the current album"
             android:background="@drawable/custom_button"
             app:backgroundTint="@null"/>
 

@@ -13,13 +13,13 @@
         android:orientation="horizontal"
         android:background="@drawable/custom_button">
 
-        <Button
+        <ImageButton
             android:id="@+id/btnRestore"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="Restore"
-            android:textColor="#FFFFFF"
+            android:src="@drawable/icon_restore"
+            android:contentDescription="Restore a deleted image"
             android:background="@drawable/custom_button"
             app:backgroundTint="@null"/>
 
@@ -29,13 +29,13 @@
             android:layout_weight="2">
         </FrameLayout>>
 
-        <Button
+        <ImageButton
             android:id="@+id/btnDelete"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="Delete"
-            android:textColor="#FFFFFF"
+            android:src="@drawable/icon_delete_permanent"
+            android:contentDescription="Permanently delete the image from device"
             android:background="@drawable/custom_button"
             app:backgroundTint="@null"/>
     </LinearLayout>

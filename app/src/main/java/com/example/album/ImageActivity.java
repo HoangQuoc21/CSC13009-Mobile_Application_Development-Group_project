@@ -18,6 +18,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.media.ExifInterface;
+import android.media.Image;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
@@ -34,6 +35,7 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -60,12 +62,10 @@ public class ImageActivity extends AppCompatActivity {
     Button btnBack;
 
     // Button ở footer của image bình thường
-    Button btnAddAlbum, btnAddFavorite, btnDelete, btnInfo,btnDeleteInAlbum;
+    ImageButton btnAddAlbum,btnAddFavorite, btnDelete,btnEdit, btnInfo,btnDeleteInAlbum;
 
     // Button ở footer của image trong Trash
-    Button btnDeleteTrash, btnRestore;
-    // Edit button
-    Button btnEdit;
+    ImageButton btnDeleteTrash, btnRestore;
 
     //Khai báo ImageView
     ImageView imageView;
@@ -149,12 +149,12 @@ public class ImageActivity extends AppCompatActivity {
             sendBroadcast(intentAddImageToAlbum);
 
             // Kết nối các nút Button với layout
-            btnAddAlbum = (Button) findViewById(R.id.btnAddAlbum);
-            btnAddFavorite = (Button) findViewById(R.id.btnAddFavorite);
-            btnDelete = (Button) findViewById(R.id.btnDelete);
-            btnEdit = (Button) findViewById(R.id.btnEdit);
-            btnInfo = (Button) findViewById(R.id.btnInfo);
-            btnDeleteInAlbum=(Button) findViewById(R.id.btnDeleteInAlbum);
+            btnAddAlbum = (ImageButton) findViewById(R.id.btnAddAlbum);
+            btnAddFavorite = (ImageButton) findViewById(R.id.btnAddFavorite);
+            btnDelete = (ImageButton) findViewById(R.id.btnDelete);
+            btnEdit = (ImageButton) findViewById(R.id.btnEdit);
+            btnInfo = (ImageButton) findViewById(R.id.btnInfo);
+            btnDeleteInAlbum=(ImageButton) findViewById(R.id.btnDeleteInAlbum);
 
             // Kiểm tra xem có ẩn hay hiện nút delete hay không?.
             if (ButtonStatusManager.getInstance().isButtonDisabled()) {
@@ -173,9 +173,10 @@ public class ImageActivity extends AppCompatActivity {
             btnAddAlbum.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // Your code here.
-                    Toast.makeText(ImageActivity.this, "Add", Toast.LENGTH_SHORT).show();
+                    //In ra thong bao de kiem tra
+                    //Toast.makeText(ImageActivity.this, "Add", Toast.LENGTH_SHORT).show();
 
+                    //Mo hop thoai add vao album
                     openDialogAddAlbum(Gravity.CENTER);
                 }
             });
@@ -185,7 +186,7 @@ public class ImageActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     // Your code here.
-//                Toast.makeText(ImageActivity.this, "Add favorite", Toast.LENGTH_SHORT).show();
+                    // Toast.makeText(ImageActivity.this, "Add favorite", Toast.LENGTH_SHORT).show();
                     // gửi index của ảnh trong danh sách cho MainActivity bằng broadcast
 
                     Intent intentAddFavorite= new Intent("addFavorite");
@@ -259,7 +260,7 @@ public class ImageActivity extends AppCompatActivity {
                     intentdeleteInAlbum.putExtra("nameAlbum",nameAlbum);
                     intentdeleteInAlbum.putExtra("imageLink",imagePath);
                     sendBroadcast(intentdeleteInAlbum);
-                    Toast.makeText(ImageActivity.this, "Delete image in this album was successful", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ImageActivity.this, "Successfully deleted image in album", Toast.LENGTH_SHORT).show();
                     finish();
                 }
             });
@@ -273,13 +274,15 @@ public class ImageActivity extends AppCompatActivity {
             loadLayout(R.layout.image_trash);
 
             // Kết nối các nút Button với layout
-            btnRestore = (Button) findViewById(R.id.btnRestore);
-            btnDeleteTrash = (Button) findViewById(R.id.btnDelete);
+            btnRestore = (ImageButton) findViewById(R.id.btnRestore);
+            btnDeleteTrash = (ImageButton) findViewById(R.id.btnDelete);
 
             // xử lý sự kiện nhấn nút Restore 1 ảnh trong Trash
             btnRestore.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    Toast.makeText(ImageActivity.this,"Image restored",Toast.LENGTH_LONG);
+
                     Intent intentRestore = new Intent("restoreImage");
                     intentRestore.putExtra("imageIndexTrash", imageIndex);
                     // add by Quan
@@ -479,7 +482,7 @@ public class ImageActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(nameAlbumToAdd.equals(""))
                 {
-                    Toast.makeText(ImageActivity.this, "Please Choose Album to Add", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ImageActivity.this, "Choose An Album To Add", Toast.LENGTH_SHORT).show();
                 }
                 else
                 {
@@ -489,7 +492,7 @@ public class ImageActivity extends AppCompatActivity {
                     addLinkImageToAlbumHadChoosen.putExtra("imageLink",imagePath);
                     addLinkImageToAlbumHadChoosen.putExtra("albumName",nameAlbumToAdd);
                     sendBroadcast(addLinkImageToAlbumHadChoosen);
-                    Toast.makeText(ImageActivity.this, "Adding this image to album was Successful", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ImageActivity.this, "Successfully added this image to selected album", Toast.LENGTH_SHORT).show();
                     dialog.dismiss();
                 }
             }
