@@ -104,11 +104,21 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> im
 
                     //lọc dựa trên loại thông tin:
 
-                    //1. Nếu loại thông tin là dateTaken thì chỉ kiểm tra có tồn tại ngày muốn lọc trong bộ key của hashmap không thôi
+                    //1. Nếu loại thông tin là dateTaken
                     if(tokens.get(0).equals("Date taken")){
                         for (Map.Entry<String, ArrayList<imageModel>> entry : imagesByDateOld.entrySet()) {
-                            if(entry.getKey().contains(tokens.get(1)))
-                                filterList.put(entry.getKey(),entry.getValue());
+                            for (imageModel img:entry.getValue()){
+                                //Nếu tìm thấy ảnh có thông tin cần tìm
+                                if((img.getDateTaken() != null) && img.getDateTaken().contains(tokens.get(1))){
+                                    //Kiểm tra xem trong hashmap lọc đã tồn tại dateTaken của ảnh khớp thông tin chưa
+                                    if(!filterList.containsKey(entry.getKey())){
+                                        //nếu chưa thì thêm dateTaken vào hashmap lọc
+                                        filterList.put(entry.getKey(),new ArrayList<imageModel>());
+                                    }
+                                    //Đưa ảnh khớp vào hashmap
+                                    filterList.get(entry.getKey()).add(img);
+                                }
+                            }
                         }
                     }
                     //2. Nếu loại thooing tin là "Camera make" thì cần lọc lồng qua các ảnh của từng key trong hashmap
