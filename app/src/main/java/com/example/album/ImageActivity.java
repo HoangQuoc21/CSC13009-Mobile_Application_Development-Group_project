@@ -347,66 +347,108 @@ public class ImageActivity extends AppCompatActivity {
         registerReceiver(receiver, filter_autoDeleteTrash);
     }
 
-    private boolean isZooming = false;
 
     //Xử lý event chạm vào ảnh (Move)
+
+    private boolean isZooming = true;
+    private float initialX1, initialY1, initialX2, initialY2;
+    private float centerX, centerY;
+    private float scaleFactor = 1.0f;
+    private int pointerPrevious =1 ;
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-
-
         boolean check = scaleGestureDetector.onTouchEvent(event);
 
+        int pointerCount = event.getPointerCount();
+
+        if(pointerCount>1)
+        {
+            pointerPrevious = pointerCount;
+        }
+        if(pointerCount==1)
+        {
+            if(MotionEvent.ACTION_UP== event.getAction())
+            {
+                pointerPrevious=1;
+            }
+        }
         if (!isZooming) {
-            float currentX = event.getX();
-            float currentY = event.getY();
-
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    lastX = currentX;
-                    lastY = currentY;
-                    break;
-
-                case MotionEvent.ACTION_MOVE:
-                    float deltaX = currentX - lastX;
-                    float deltaY = currentY - lastY;
-                    imageView.scrollBy((int) -deltaX, (int) -deltaY);
-                    break;
+            if (pointerCount == 1 && pointerPrevious==1) {
+                // Nếu chỉ có một ngón tay, xử lý sự kiện di chuyển
+                    handleSingleTouchMove(event);
             }
 
-            lastX = currentX;
-            lastY = currentY;
         }
+
         return super.onTouchEvent(event);
     }
 
+    private void handleSingleTouchMove(MotionEvent event) {
+        float currentX = event.getX();
+        float currentY = event.getY();
 
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                // Lưu lại tọa độ khi bắt đầu di chuyển
+                initialX1 = currentX;
+                initialY1 = currentY;
+                break;
 
-    // Xử lý Scale ảnh
+            case MotionEvent.ACTION_MOVE:
+                // Tính toán sự chênh lệch giữa tọa độ hiện tại và tọa độ khi bắt đầu di chuyển
+                float deltaX = currentX - initialX1;
+                float deltaY = currentY - initialY1;
+
+                // Di chuyển trung tâm zoom (không thay đổi tổng dịch chuyển)
+                centerX -= deltaX;
+                centerY -= deltaY;
+
+                // Áp dụng di chuyển cho ImageView
+                imageView.setTranslationX(-centerX);
+                imageView.setTranslationY(-centerY);
+
+                // Cập nhật tọa độ khi bắt đầu di chuyển để sử dụng trong lần di chuyển tiếp theo
+                initialX1 = currentX;
+                initialY1 = currentY;
+
+                break;
+        }
+    }
+
     class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
-
         @Override
         public boolean onScaleBegin(ScaleGestureDetector detector) {
             isZooming = true;
+
+
             return true;
         }
 
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
             isZooming = false;
+
+
+            // Lưu lại tỷ lệ zoom cuối cùng
+            scaleFactor = detector.getScaleFactor();
         }
+
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
-            // Lấy độ Zoom
-            Factor *= detector.getScaleFactor();
-            Factor = Math.max(0.1f, Math.min(Factor, 10.f));
-            // Zoom ảnh (Zoom in hoặc out)
-            // Để kiểm tra, nếu dùng điện thoại thì dùng 2 ngón tay để zoom.
-            // Nếu dùng máy ảo trong laptop thì nhấn giữ phím Ctrl rồi lăn con lăn của chuột, hoặc dùng touchpad để Zoom
-            imageView.setScaleX(Factor);
-            imageView.setScaleY(Factor);
+            if (isZooming) {
+                // Lấy độ zoom
+                float scaleFactor = detector.getScaleFactor();
+                Factor *= scaleFactor;
+                Factor = Math.max(0.1f, Math.min(Factor, 10.f));
+
+                // Cập nhật tỷ lệ zoom của ImageView
+                imageView.setScaleX(Factor);
+                imageView.setScaleY(Factor);
+            }
             return true;
         }
     }
+
 
     // load layout footer tương ứng với 2 trường hợp: ảnh bình thường và ảnh trong Trash
     private void loadLayout(int layoutResId)
