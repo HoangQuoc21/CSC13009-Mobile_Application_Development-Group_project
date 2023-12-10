@@ -158,7 +158,9 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
             dbAlbum=this.openOrCreateDatabase("MyDatabase",MODE_PRIVATE,null);
 
         }
-        catch (SQLException e){}
+        catch (SQLException e){
+            Toast.makeText(this, "Loi", Toast.LENGTH_SHORT).show();
+        }
 
         // Tạo bảng chứa danh sách các tên album;
         CreateTable(dbAlbum,"listNameTable");
