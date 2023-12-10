@@ -1460,6 +1460,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
     }
 
 
+
     // đặt lịch xóa ảnh tự động sau 24h
     private void scheduleDelete(int jobId, int imageId, String imageLink) {
         JobInfo.Builder builder = new JobInfo.Builder(jobId, new ComponentName(this, AutoDeleteService.class))
