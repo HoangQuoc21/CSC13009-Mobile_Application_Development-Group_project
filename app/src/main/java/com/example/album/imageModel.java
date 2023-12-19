@@ -33,7 +33,6 @@ public class imageModel {
         this.path = path;
     }
 
-    //========================================= QUOC WROTE THIS =============================================================
     //Constructor để tạo và lưu thông tin exif cho đối tượng imageModel này. Mục đích là để đọc thông tin exif trong imageActivity
     //(Đối tượng chưa được tạo trước đó)
     public imageModel(Uri path, String imagePath, Context context){
@@ -106,7 +105,6 @@ public class imageModel {
             }
         }
     }
-    //======================================================================================================
 
     public int getId() {
         return id;

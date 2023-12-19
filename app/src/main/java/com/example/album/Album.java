@@ -1,5 +1,6 @@
 package com.example.album;
 
+//Class dùng để lưu trữ các thông tin về album
 public class Album {
     private String name;
     public String getName()
@@ -10,8 +11,6 @@ public class Album {
     {
         this.name=name;
     }
-    // Tạo constructor
-
     public Album(String name) {
         this.name = name;
     }

@@ -98,7 +98,6 @@ public class ImageActivity extends AppCompatActivity {
                 listNameAlbum=intent.getStringArrayListExtra("listAlbum");
             }
 
-            //===========================ADD BY TRUC ===========================
             // lắng nghe broadcast tự động xóa sau 24h. Nếu ảnh người dùng đang xem
             // là ảnh đang được tự động xóa thì tự thoát khỏi ImageActivity
             if ("autoDeleteTrash".equals(intent.getAction()))
@@ -109,7 +108,6 @@ public class ImageActivity extends AppCompatActivity {
                     finish();
                 }
             }
-            //====================================================================
         }
     };
 
@@ -251,7 +249,6 @@ public class ImageActivity extends AppCompatActivity {
                 }
             });
             // Nút yêu cầu xóa ảnh trong album
-            // Thêm bởi Quân
             btnDeleteInAlbum.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -264,7 +261,6 @@ public class ImageActivity extends AppCompatActivity {
                     finish();
                 }
             });
-
         }
 
         // khi là ảnh trong Trash
@@ -349,7 +345,6 @@ public class ImageActivity extends AppCompatActivity {
 
 
     //Xử lý event chạm vào ảnh (Move)
-
     private boolean isZooming = true;
     private float initialX1, initialY1, initialX2, initialY2;
     private float centerX, centerY;
@@ -427,8 +422,6 @@ public class ImageActivity extends AppCompatActivity {
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
             isZooming = false;
-
-
             // Lưu lại tỷ lệ zoom cuối cùng
             scaleFactor = detector.getScaleFactor();
         }
@@ -448,7 +441,6 @@ public class ImageActivity extends AppCompatActivity {
             return true;
         }
     }
-
 
     // load layout footer tương ứng với 2 trường hợp: ảnh bình thường và ảnh trong Trash
     private void loadLayout(int layoutResId)
@@ -496,7 +488,6 @@ public class ImageActivity extends AppCompatActivity {
 
         for (int i=0;i<listNameAlbum.size();i++)
         {
-//                    listAlbum.add(new Album(nameAlbum[i]));
             listAlbum.add(new Album(listNameAlbum.get(i)));
         }
 

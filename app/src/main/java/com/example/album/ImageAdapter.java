@@ -79,7 +79,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.viewHolder> 
         });
     }
 
-
     @Override
     public int getItemCount() {
         //Quoc fix this

@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.TreeMap;
 
 public interface SortingDatesInterface {
-    //===================================== QUOC WROTE THIS ======================================
-
     //Hàm sắp xếp một mảng các chuỗi "ngày tháng năm" theo thứ tự giảm dần
     static void sortDatesDescending(ArrayList<String> dateList) {
         Collections.sort(dateList, new DateComparator());
@@ -41,7 +39,6 @@ public interface SortingDatesInterface {
 
         @Override
         public int compare(String date1, String date2) {
-            //===================================== TRUC ADD THIS ======================================
             // Kiểm tra null vì nếu date là null thì bị crash về sau
             if (date1 == null && date2 == null) {
                 return 0;
@@ -50,7 +47,6 @@ public interface SortingDatesInterface {
             } else if (date2 == null) {
                 return -1;
             }
-            //==========================================================================================
             else {
                 try {
                     return dateFormat.parse(date2).compareTo(dateFormat.parse(date1));
@@ -61,5 +57,4 @@ public interface SortingDatesInterface {
             }
         }
     }
-    //===========================================================================================
 }

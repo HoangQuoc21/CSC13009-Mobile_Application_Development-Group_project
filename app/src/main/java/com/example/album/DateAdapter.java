@@ -25,23 +25,18 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
-//[QUOC]: implements thêm interface Filterable để lọc thông tin exif; SortingDatesInterface để sắp xếp ảnh theo thứ tự ngày giảm dần
+//implements thêm interface Filterable để lọc thông tin exif; SortingDatesInterface để sắp xếp ảnh theo thứ tự ngày giảm dần
 public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> implements Filterable, SortingDatesInterface {
     private Context context;
     private ArrayList<String> dates;
     private HashMap<String, ArrayList<imageModel>> imagesByDate;
-    //========================================= QUOC ADDED THIS =====================================
     //Thêm biến này giữ giá trị là hashmap khởi tạo ban đầu (khi bật app) để phục vụ cho việc filter
     private HashMap<String, ArrayList<imageModel>> imagesByDateOld;
-    //===============================================================================================
 
     public DateAdapter(ArrayList<String> dates, HashMap<String, ArrayList<imageModel>> imagesByDate, Context context) {
         this.dates = dates;
         this.imagesByDate = imagesByDate;
-
-        //========================================= QUOC ADDED THIS =====================================
         this.imagesByDateOld = imagesByDate; //giữ giá trị hashmap khởi tạo ban đầu
-        //===============================================================================================
         this.context = context;
     }
 
@@ -79,7 +74,6 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> im
         return dates.size();
     }
 
-    //====================================== QUOC WROTE THIS =======================================
     //Phương thức getFilter() để lọc hình theo chuỗi yêu cầu truyền từ MainActivity vào
     @Override
     public Filter getFilter() {
@@ -169,5 +163,4 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> im
             }
         };
     }
-    //==============================================================================================
 }

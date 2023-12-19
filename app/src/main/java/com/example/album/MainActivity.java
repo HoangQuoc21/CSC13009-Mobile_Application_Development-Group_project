@@ -279,7 +279,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                         Utils.deleteDataInTableTrash(getApplicationContext(), imageID);
                     }
                 }
-
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
                 restoreDataIntoAllTable(dbAlbum);
@@ -296,10 +295,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
             }
         });
 
-
-        // load layout album lên để kết nối với các widget, adapter,... trong đó
-
-
         // load layout all lên để kết nối với các widget, adapter,... trong đó
         loadLayout(R.layout.main_all, 1);
         // Kết nối recycler và init các instance chứa thông tin ảnh khi đọc
@@ -312,7 +307,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         dateAdapter = new DateAdapter(dates, imagesByDate, this);
         recyclerView.setAdapter(dateAdapter);
 
-        //====================================== QUOC WROTE THIS ==============================================
         //Set dữ liệu cho spinner là loại thông tin exif tìm kiếm
         String[] arraySpinner = new String[] {
                 "Date taken", "Camera make"
@@ -329,7 +323,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
 
         //Ánh xạ searchView
         exifSearchView = findViewById(R.id.exifSearchView);
-        //=====================================================================================================
+
         nAll = 1;
 
 
@@ -344,7 +338,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         activeButton.setBackground(activeDrawable);
 
 
-        //===================================== TRUC ADD THIS ======================================
         // kiểm tra phiên bản Android để lựa chọn cách xin cấp quyền cho phù hợp
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             // Kiểm tra xem ứng dụng có quyền MANAGE_EXTERNAL_STORAGE chưa
@@ -401,13 +394,11 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 customActiveButton(btnAll); // custom tiêu đề của tab All
                 loadLayout(R.layout.main_all, 1); // load layout của tab All lên frame
 
-                //=========================== QUOC ADDED THIS ==================================
-                //Xoa thong tin dang tim kiem trong search view di va huy chon search view luon
+                //Xóa thông tin đang tìm kiếm trong search view đi và hủy chọn search view luôn
                 if(!exifSearchView.isIconified()){
                     exifSearchView.setQuery("",false);
                     exifSearchView.setIconified(true);
                 }
-                //==============================================================================
             }
         });
 
@@ -421,13 +412,10 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 // Xử lý hiện list Album, xử dụng list View
                 listViewAlbum = findViewById(R.id.lvAlbum);
                 // Chuyển ArrayList<String> listNameAlbum sang String nameAlbum[]
-//                nameAlbum=new String[listNameAlbum.size()];
-//                nameAlbum= listNameAlbum.toArray(nameAlbum);
 
                 listAlbum.clear();
                 for (int i=0;i<listNameAlbum.size();i++)
                 {
-//                    listAlbum.add(new Album(nameAlbum[i]));
                     listAlbum.add(new Album(listNameAlbum.get(i)));
 
                 }
@@ -500,7 +488,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
 
         IntentFilter filter_deleteInAlbum = new IntentFilter("deleteInAlbum");
 
-
         registerReceiver(receiver, filter_moveToTrash);
         registerReceiver(receiver, filter_restore);
         registerReceiver(receiver, filter_deleteTrash);
@@ -511,10 +498,8 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         registerReceiver(receiver, filter_addImageAlbum);
         registerReceiver(receiver, filter_insertImageToAlbum);
 
-        //====================================== QUOC WROTE THIS ===================================
         //Phương thức này dùng để xử lý khi nhập chuỗi tìm kiếm trong searchView
         exifSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-
             //Xử lý khi nhập nguyên chuỗi tìm kiếm rồi bấm enter
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -549,16 +534,13 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 return false;
             }
         });
-        //==========================================================================================
         registerReceiver(receiver, filter_deleteInAlbum);
-
     }
 
     @Override
     protected void onDestroy()
     {
         super.onDestroy();
-
         // hủy đăng ký broadcast receiver
         unregisterReceiver(receiver);
     }
@@ -567,10 +549,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
     @Override
     protected void onResume() {
         super.onResume();
-        // Nếu đã được cấp quyền đọc bộ nhớ thì mới đọc ảnh
-        // từ bộ nhớ ngoài
-
-
         // Cần clear hai biến này của DateAdapter trước khi đọc
         // danh sách ảnh từ bộ nhớ ngoài để tránh sự trùng lặp ảnh
         imagesByDate.clear();
@@ -663,13 +641,11 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 i++;
             }
 
-            //======================= QUOC ADDED THIS =====================================
             //Gọi hàm từ interface SortingDatesInterface để sắp xếp ngày giảm dần
             //sắp xếp lại hashmap theo thứ tự giảm dần của key (key là dateTaken)
             SortingDatesInterface.sortDatesDescending(dates);
             //sắp xếp lại date theo thứ tự giảm dần
             SortingDatesInterface.sortHashMapByKeyDescending(imagesByDate);
-            //=============================================================================
 
             dateAdapter.notifyDataSetChanged();
         }
@@ -699,11 +675,9 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
 
-                /************* add by Quan *****************/
                 /* Lấy link ảnh rồi sau đó xóa ảnh khỏi toàn bộ album*/
                 linkImage=intent.getStringExtra("imageLink");
                 deleteDataFromAllTable(dbAlbum,linkImage);
-                /*****************************************/
 
                 // tạo id riêng biệt cho mỗi lượt xóa để service, restore,... biết là ảnh nào
                 int deleteId = (int) (System.currentTimeMillis() / 1000);
@@ -759,13 +733,10 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 adapterTrash.notifyDataSetChanged();
                 dateAdapter.notifyDataSetChanged();
 
-                /*
-                * Add by Quân*/
+
                 /* Lấy link ảnh rồi restore ảnh vào toàn bộ album đã được thêm trước đó. */
                 String imageLink=intent.getStringExtra("imageLink");
                 restoreOneDataIntoALLTable(dbAlbum,imageLink);
-                /*
-                * Success*/
 
                 Utils.deleteDataInTableTrash(getApplicationContext(), imageID);
             }
@@ -851,7 +822,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
             }
 
             // lắng nghe sự kiện xóa album
-
             if("deleteAlbum".equals(intent.getAction()))
             {
                 // Lấy Tên của Album muốn delete
@@ -874,7 +844,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
 
             // lắng nghe sự kiện Thêm ảnh vào album, sự kiện này sẽ gửi danh sách album cho dialog add image to album
             // sau đó dialog sẽ hiện thì danh sách album cho người dùng chọn.
-
             if("addImageToAlbum".equals(intent.getAction()))
             {
                 Intent intentListAlbum= new Intent("listAlbumSender");
@@ -884,7 +853,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
             }
 
             // lắng nghe sự kiện Thêm ảnh vào album, sự kiện này sẽ thêm ảnh vào album được chọn
-
             if("addLinkImageToAlbumHadChoosen".equals(intent.getAction()))
             {
                 String nameAlbumToAdd=intent.getStringExtra("albumName");
@@ -892,8 +860,8 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
                 insertDataToTable(dbAlbum,nameAlbumToAdd,linkImagetoAdd);
                 //albumAdapter.notifyDataSetChanged();
             }
-            // lắng nghe sự kiện xóa ảnh khỏi album, sự kiện này sẽ thêm ảnh vào album được chọn
 
+            // lắng nghe sự kiện xóa ảnh khỏi album, sự kiện này sẽ thêm ảnh vào album được chọn
             if("deleteInAlbum".equals(intent.getAction()))
             {
                 String nameAlbum=intent.getStringExtra("nameAlbum");
@@ -1297,7 +1265,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
 
     }
 
-    //================= Add by Quoc ====================
     //- Phương thức onBackPressed để thoát cái bàn phím (hiện khi dùng searchView)
     //- Thoát cái bàn phím thôi chứ chưa thoát cái khung searchView
     @Override
@@ -1315,12 +1282,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         try {
             String sqlQuery = "INSERT INTO TrashAlbumImage(nameAlbum, nameImage) VALUES  ('" + nameTable + "','" + data + "');";
             db.execSQL(sqlQuery);
-
-//            Cursor cursor = db.rawQuery("SELECT * FROM TrashAlbumImage WHERE nameAlbum=?", new String[]{nameTable});
-//
-//            boolean result = cursor.getCount() > 0;
-//
-//            cursor.close();
         } catch (SQLException e) {
             Log.e("SQL_ERROR", "Có lỗi xảy ra", e);
         }
@@ -1366,14 +1327,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
             e.printStackTrace();
         }
     }
-//    @Override
-//    protected void onStop() {
-//        super.onStop();
-//        dbAlbum.close();
-//    }
 
-
-//========================================= ADD BY TRUC =============================================================
     // tạo table trong database lưu ảnh trong Trash
     public void CreateTableTrash()
     {
@@ -1465,7 +1419,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
     private void scheduleDelete(int jobId, int imageId, String imageLink) {
         JobInfo.Builder builder = new JobInfo.Builder(jobId, new ComponentName(this, AutoDeleteService.class))
                 .setMinimumLatency(24 * 60 * 60 * 1000) // 24 giờ
-//                .setMinimumLatency(24 * 1000)
+                //.setMinimumLatency(24 * 1000) //24 giây
                 .setPersisted(true);
 
         // truyền thông tin vào
