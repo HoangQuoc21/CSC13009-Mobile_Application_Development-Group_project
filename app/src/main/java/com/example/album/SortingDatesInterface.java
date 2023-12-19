@@ -36,7 +36,6 @@ public interface SortingDatesInterface {
         //Tạo dateFormat
         private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
 
-
         @Override
         public int compare(String date1, String date2) {
             // Kiểm tra null vì nếu date là null thì bị crash về sau

@@ -108,7 +108,6 @@ public class Current_Album extends AppCompatActivity {
         btnDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Toast.makeText(Current_Album.this, "Check", Toast.LENGTH_SHORT).show();
                 openDialogAddAlbum(Gravity.CENTER);
             }
         });
@@ -117,7 +116,7 @@ public class Current_Album extends AppCompatActivity {
 
     }
 
-    // add by Quân, receiver dùng để nhận dữ liều từ ImageActivity sau đó xóa ảnh khỏi album đang chọn
+    //receiver dùng để nhận dữ liều từ ImageActivity sau đó xóa ảnh khỏi album đang chọn
     BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -134,7 +133,7 @@ public class Current_Album extends AppCompatActivity {
 
     // Đưa giá trị set up của button DeleteInAlbum trong ImageActivity về mặc định để khi không mở trong album
     // thì sẽ không hiện nút Delete In Album
-            @Override
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         ButtonStatusManager.getInstance().setButtonDisabled(false);

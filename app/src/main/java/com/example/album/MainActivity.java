@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
 
         // Tạo bảnh chứa danh sách album và ảnh để restore từ trash
         createTableToStoreAlbumAndImage(dbAlbum);
-        // deleteAllDataInTableTrashAlbumImage(dbAlbum);
+
         // Insert giá trị Favorite vào, Favorite chính là album yêu thích.
         insertDataToTable(dbAlbum,"listNameTable","Favorite");
 
@@ -180,8 +180,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         {
             CreateTable(dbAlbum,listNameAlbum.get(index));
         }
-
-
 
         // Tạo database Trash
         try
@@ -1275,7 +1273,6 @@ public class MainActivity extends AppCompatActivity implements SortingDatesInter
         }
         super.onBackPressed();
     }
-    //==================================================
 
     //Hàm dùng để đưa giá trị album và image vào trong table TrashAlbumImage
     public void insertImageToDeleteAblbumTable(SQLiteDatabase db, String nameTable, String data) {

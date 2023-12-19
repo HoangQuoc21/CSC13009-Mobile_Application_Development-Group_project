@@ -322,14 +322,8 @@ public class ImageActivity extends AppCompatActivity {
 
                 //Xử lý scale ảnh (Zoom in, Zoom out);
                 scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
-
-
-                //thông báo để kiểm tra
-                //Toast.makeText(this, " Đọc được ảnh từ đường dẫn", Toast.LENGTH_SHORT).show();
             }
             else {
-                //thông báo để kiểm tra
-                //Toast.makeText(this, "Không thể đọc ảnh từ đường dẫn.", Toast.LENGTH_SHORT).show();
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -414,8 +408,6 @@ public class ImageActivity extends AppCompatActivity {
         @Override
         public boolean onScaleBegin(ScaleGestureDetector detector) {
             isZooming = true;
-
-
             return true;
         }
 
@@ -539,7 +531,6 @@ public class ImageActivity extends AppCompatActivity {
     protected void onDestroy()
     {
         super.onDestroy();
-
         // hủy đăng ký broadcast receiver
         unregisterReceiver(receiver);
     }

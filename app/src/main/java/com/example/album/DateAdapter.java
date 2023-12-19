@@ -73,7 +73,6 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> im
     public int getItemCount() {
         return dates.size();
     }
-
     //Phương thức getFilter() để lọc hình theo chuỗi yêu cầu truyền từ MainActivity vào
     @Override
     public Filter getFilter() {
